@@ -1,0 +1,2082 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Controle Financeiro</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0e0f11;
+  --bg2: #16181c;
+  --bg3: #1e2026;
+  --bg4: #262930;
+  --border: rgba(255,255,255,0.07);
+  --border2: rgba(255,255,255,0.12);
+  --text: #f0f1f3;
+  --text2: #8a8f9a;
+  --text3: #565b66;
+  --accent: #4f7cff;
+  --accent2: #3a5fcc;
+  --green: #2db87a;
+  --green-bg: rgba(45,184,122,0.1);
+  --yellow: #f0a030;
+  --yellow-bg: rgba(240,160,48,0.1);
+  --red: #e84343;
+  --red-bg: rgba(232,67,67,0.1);
+  --blue-bg: rgba(79,124,255,0.1);
+  --radius: 12px;
+  --radius-sm: 8px;
+  --radius-xs: 6px;
+  --font: 'DM Sans', sans-serif;
+  --mono: 'DM Mono', monospace;
+  --shadow: 0 4px 24px rgba(0,0,0,0.4);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: var(--font);
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  font-size: 14px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* SETUP SCREEN */
+#setup-screen {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+}
+
+.setup-card {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 2.5rem;
+  max-width: 480px;
+  width: 100%;
+}
+
+.setup-logo {
+  width: 44px;
+  height: 44px;
+  background: var(--accent);
+  border-radius: var(--radius);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 1.5rem;
+}
+
+.setup-logo svg { width: 22px; height: 22px; fill: white; }
+
+.setup-card h1 {
+  font-size: 22px;
+  font-weight: 600;
+  margin-bottom: 6px;
+  letter-spacing: -0.3px;
+}
+
+.setup-card p {
+  color: var(--text2);
+  font-size: 14px;
+  margin-bottom: 2rem;
+  line-height: 1.6;
+}
+
+.form-group { margin-bottom: 1rem; }
+
+.form-group label {
+  display: block;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text2);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 6px;
+}
+
+.form-group input, .form-group select {
+  width: 100%;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 10px 14px;
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 14px;
+  outline: none;
+  transition: border-color .15s;
+}
+
+.form-group input:focus, .form-group select:focus {
+  border-color: var(--accent);
+}
+
+.form-group input::placeholder { color: var(--text3); }
+
+.setup-hint {
+  background: var(--blue-bg);
+  border: 1px solid rgba(79,124,255,0.2);
+  border-radius: var(--radius-sm);
+  padding: 12px;
+  font-size: 12px;
+  color: var(--text2);
+  line-height: 1.6;
+  margin-bottom: 1.5rem;
+}
+
+.setup-hint a { color: var(--accent); text-decoration: none; }
+
+/* MAIN APP */
+#app { display: none; min-height: 100vh; }
+
+/* SIDEBAR */
+.layout { display: flex; min-height: 100vh; }
+
+.sidebar {
+  width: 220px;
+  background: var(--bg2);
+  border-right: 1px solid var(--border);
+  padding: 1.5rem 1rem;
+  display: flex;
+  flex-direction: column;
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 100vh;
+  z-index: 100;
+}
+
+.sidebar-logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 8px;
+  margin-bottom: 2rem;
+}
+
+.sidebar-logo-icon {
+  width: 32px;
+  height: 32px;
+  background: var(--accent);
+  border-radius: var(--radius-xs);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.sidebar-logo-icon svg { width: 16px; height: 16px; fill: white; }
+.sidebar-logo-name { font-size: 14px; font-weight: 600; letter-spacing: -0.2px; }
+
+.nav-section-title {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text3);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: 0 8px;
+  margin-bottom: 6px;
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 10px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  color: var(--text2);
+  font-size: 13px;
+  font-weight: 400;
+  transition: all .15s;
+  margin-bottom: 2px;
+  border: none;
+  background: none;
+  width: 100%;
+  text-align: left;
+}
+
+.nav-item:hover { background: var(--bg3); color: var(--text); }
+.nav-item.active { background: var(--blue-bg); color: var(--accent); font-weight: 500; }
+
+.nav-item svg { width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; }
+
+.nav-badge {
+  margin-left: auto;
+  background: var(--red);
+  color: white;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 1px 6px;
+  border-radius: 20px;
+}
+
+.sidebar-bottom { margin-top: auto; }
+
+.notion-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  background: var(--bg3);
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  color: var(--text2);
+}
+
+.notion-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--text3);
+  flex-shrink: 0;
+}
+
+.notion-dot.connected { background: var(--green); box-shadow: 0 0 6px var(--green); }
+
+/* MAIN CONTENT */
+.main {
+  flex: 1;
+  margin-left: 220px;
+  padding: 2rem 2.5rem;
+  max-width: calc(100% - 220px);
+}
+
+.page { display: none; }
+.page.active { display: block; }
+
+.page-header {
+  margin-bottom: 2rem;
+}
+
+.page-header h1 {
+  font-size: 24px;
+  font-weight: 600;
+  letter-spacing: -0.4px;
+  margin-bottom: 4px;
+}
+
+.page-header p { color: var(--text2); font-size: 14px; }
+
+/* METRICS */
+.metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-bottom: 1.5rem;
+}
+
+.metric-card {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1.25rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.metric-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+}
+
+.metric-card.danger::before { background: var(--red); }
+.metric-card.warning::before { background: var(--yellow); }
+.metric-card.success::before { background: var(--green); }
+.metric-card.info::before { background: var(--accent); }
+
+.metric-label {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text3);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 10px;
+}
+
+.metric-value {
+  font-size: 26px;
+  font-weight: 600;
+  letter-spacing: -0.5px;
+  color: var(--text);
+}
+
+.metric-value.danger { color: var(--red); }
+.metric-value.warning { color: var(--yellow); }
+
+.metric-sub {
+  font-size: 11px;
+  color: var(--text3);
+  margin-top: 4px;
+}
+
+/* CARDS */
+.card {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+.card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.card-title {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text);
+}
+
+.card-body { padding: 0; }
+
+/* TABLE */
+.data-table { width: 100%; border-collapse: collapse; }
+
+.data-table th {
+  padding: 10px 16px;
+  text-align: left;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text3);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg3);
+}
+
+.data-table td {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+  font-size: 13px;
+}
+
+.data-table tr:last-child td { border-bottom: none; }
+.data-table tr:hover td { background: var(--bg3); }
+
+.data-table .td-empresa {
+  font-size: 11px;
+  color: var(--text3);
+  margin-top: 2px;
+}
+
+/* BADGES */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.badge-red { background: var(--red-bg); color: var(--red); }
+.badge-yellow { background: var(--yellow-bg); color: var(--yellow); }
+.badge-green { background: var(--green-bg); color: var(--green); }
+.badge-blue { background: var(--blue-bg); color: var(--accent); }
+.badge-gray { background: rgba(255,255,255,0.06); color: var(--text2); }
+
+.badge-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+/* LANÇAR */
+.lancamento-layout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+  align-items: start;
+}
+
+.upload-zone {
+  border: 1.5px dashed var(--border2);
+  border-radius: var(--radius);
+  padding: 2.5rem 1.5rem;
+  text-align: center;
+  cursor: pointer;
+  transition: all .2s;
+  background: var(--bg2);
+  position: relative;
+  overflow: hidden;
+}
+
+.upload-zone:hover {
+  border-color: var(--accent);
+  background: var(--blue-bg);
+}
+
+.upload-zone.dragover {
+  border-color: var(--accent);
+  background: var(--blue-bg);
+  transform: scale(1.01);
+}
+
+.upload-icon {
+  width: 48px;
+  height: 48px;
+  background: var(--bg3);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 1rem;
+}
+
+.upload-icon svg { width: 22px; height: 22px; stroke: var(--text2); fill: none; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+
+.upload-title { font-size: 15px; font-weight: 500; margin-bottom: 6px; }
+.upload-sub { font-size: 12px; color: var(--text2); margin-bottom: 1rem; }
+
+.upload-types {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.upload-type-badge {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xs);
+  padding: 3px 8px;
+  font-size: 11px;
+  color: var(--text3);
+  font-family: var(--mono);
+}
+
+#file-input { display: none; }
+
+.ai-reading {
+  text-align: center;
+  padding: 2rem;
+}
+
+.ai-spinner {
+  width: 40px;
+  height: 40px;
+  border: 2px solid var(--border);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  margin: 0 auto 1rem;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.ai-reading-text { font-size: 14px; color: var(--text2); }
+.ai-reading-sub { font-size: 12px; color: var(--text3); margin-top: 4px; }
+
+/* AI RESULT */
+.ai-result-box {
+  background: linear-gradient(135deg, rgba(79,124,255,0.08), rgba(79,124,255,0.03));
+  border: 1px solid rgba(79,124,255,0.2);
+  border-radius: var(--radius);
+  padding: 1rem;
+  margin-bottom: 1rem;
+}
+
+.ai-result-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.ai-spark {
+  width: 28px;
+  height: 28px;
+  background: var(--accent);
+  border-radius: var(--radius-xs);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ai-spark svg { width: 14px; height: 14px; fill: white; }
+.ai-result-title { font-size: 13px; font-weight: 500; color: var(--accent); }
+.ai-result-sub { font-size: 11px; color: var(--text2); margin-top: 1px; }
+
+.ai-fields {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.ai-field {
+  background: var(--bg3);
+  border-radius: var(--radius-sm);
+  padding: 8px 10px;
+}
+
+.ai-field-label {
+  font-size: 10px;
+  color: var(--text3);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 3px;
+}
+
+.ai-field-val {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text);
+}
+
+.ai-field-val.mono { font-family: var(--mono); font-size: 11px; }
+
+/* FORM */
+.form-card {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1.25rem;
+}
+
+.form-section-title {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text3);
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  margin-bottom: 1rem;
+}
+
+.fgroup { margin-bottom: 10px; }
+
+.fgroup label {
+  display: block;
+  font-size: 11px;
+  color: var(--text2);
+  margin-bottom: 4px;
+}
+
+.fgroup input, .fgroup select, .fgroup textarea {
+  width: 100%;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 8px 12px;
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 13px;
+  outline: none;
+  transition: border-color .15s;
+}
+
+.fgroup input:focus, .fgroup select:focus, .fgroup textarea:focus {
+  border-color: var(--accent);
+}
+
+.fgroup select option { background: var(--bg3); }
+.fgroup input::placeholder { color: var(--text3); }
+
+.fgroup-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+
+.btn-save {
+  width: 100%;
+  padding: 11px;
+  background: var(--accent);
+  color: white;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-family: var(--font);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all .15s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.btn-save:hover { background: var(--accent2); }
+.btn-save:disabled { opacity: 0.5; cursor: not-allowed; }
+.btn-save svg { width: 16px; height: 16px; stroke: white; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+/* WPP PREVIEW */
+.wpp-box {
+  background: rgba(37,211,102,0.07);
+  border: 1px solid rgba(37,211,102,0.2);
+  border-radius: var(--radius);
+  padding: 1rem;
+  margin-top: 12px;
+}
+
+.wpp-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.wpp-icon { font-size: 18px; }
+.wpp-title { font-size: 13px; font-weight: 500; color: var(--green); }
+
+.wpp-msg {
+  background: var(--bg3);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+  font-size: 12px;
+  color: var(--text2);
+  font-family: var(--mono);
+  line-height: 1.8;
+  margin-bottom: 10px;
+  white-space: pre-wrap;
+}
+
+.btn-wpp {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  background: #25d366;
+  color: white;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-family: var(--font);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: .15s;
+}
+
+.btn-wpp:hover { background: #1ebd5a; }
+
+/* EMPRESAS */
+.empresas-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; }
+
+.empresa-card {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1.25rem;
+  cursor: pointer;
+  transition: border-color .15s;
+}
+
+.empresa-card:hover { border-color: var(--border2); }
+
+.empresa-card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+.empresa-name { font-size: 15px; font-weight: 500; letter-spacing: -0.2px; }
+.empresa-seg { font-size: 11px; color: var(--text3); margin-top: 3px; }
+
+.empresa-metrics {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 8px;
+}
+
+.emp-metric { text-align: center; }
+.emp-metric-val { font-size: 16px; font-weight: 600; }
+.emp-metric-val.danger { color: var(--red); }
+.emp-metric-label { font-size: 10px; color: var(--text3); margin-top: 2px; }
+
+/* COMPARAR */
+.comparar-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 1.5rem; }
+
+.bar-item { margin-bottom: 1.25rem; }
+.bar-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+.bar-name { font-size: 13px; font-weight: 500; }
+.bar-val { font-size: 13px; font-weight: 600; color: var(--accent); }
+.bar-track { height: 6px; background: var(--bg3); border-radius: 3px; overflow: hidden; }
+.bar-fill { height: 100%; border-radius: 3px; background: var(--accent); transition: width .6s cubic-bezier(.4,0,.2,1); }
+
+/* TOAST */
+.toast {
+  position: fixed;
+  bottom: 2rem;
+  right: 2rem;
+  background: var(--bg2);
+  border: 1px solid var(--border2);
+  border-radius: var(--radius);
+  padding: 14px 18px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 13px;
+  box-shadow: var(--shadow);
+  z-index: 999;
+  transform: translateY(20px);
+  opacity: 0;
+  transition: all .3s cubic-bezier(.4,0,.2,1);
+  max-width: 320px;
+}
+
+.toast.show { transform: translateY(0); opacity: 1; }
+.toast-icon { width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.toast-icon.success { background: var(--green-bg); }
+.toast-icon.success svg { stroke: var(--green); }
+.toast-icon.error { background: var(--red-bg); }
+.toast-icon.error svg { stroke: var(--red); }
+.toast-icon svg { width: 14px; height: 14px; stroke-width: 2.5; fill: none; stroke-linecap: round; stroke-linejoin: round; }
+.toast-text { font-weight: 500; }
+.toast-sub { font-size: 11px; color: var(--text2); margin-top: 2px; }
+
+/* LOADING */
+.loading-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(14,15,17,0.8);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 200;
+  backdrop-filter: blur(4px);
+}
+
+.loading-spinner {
+  width: 48px;
+  height: 48px;
+  border: 2px solid var(--border);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  margin-bottom: 1rem;
+}
+
+.loading-text { font-size: 14px; color: var(--text2); }
+
+/* EMPTY STATE */
+.empty-state {
+  text-align: center;
+  padding: 3rem 2rem;
+  color: var(--text2);
+}
+
+.empty-icon {
+  width: 56px;
+  height: 56px;
+  background: var(--bg3);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 1rem;
+}
+
+.empty-icon svg { width: 24px; height: 24px; stroke: var(--text3); fill: none; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+.empty-title { font-size: 15px; font-weight: 500; margin-bottom: 6px; color: var(--text); }
+.empty-text { font-size: 13px; }
+
+/* ALERTAS PAGE */
+.alertas-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem; }
+
+.alerta-card {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1.25rem;
+}
+
+.alerta-title { font-size: 13px; font-weight: 500; margin-bottom: 1rem; }
+
+.alerta-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 12px;
+}
+
+.alerta-item:last-child { border-bottom: none; }
+.alerta-item-name { color: var(--text); }
+.alerta-item-val { color: var(--text2); font-weight: 500; }
+.alerta-item-val.danger { color: var(--red); }
+.alerta-item-val.warning { color: var(--yellow); }
+
+.btn-outline {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  background: transparent;
+  border: 1px solid var(--border2);
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 13px;
+  font-weight: 400;
+  cursor: pointer;
+  transition: .15s;
+}
+
+.btn-outline:hover { background: var(--bg3); }
+
+/* MODAL */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.6);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 300;
+  backdrop-filter: blur(4px);
+}
+
+.modal-overlay.open { display: flex; }
+
+.modal {
+  background: var(--bg2);
+  border: 1px solid var(--border2);
+  border-radius: 20px;
+  padding: 2rem;
+  max-width: 440px;
+  width: 90%;
+  box-shadow: var(--shadow);
+}
+
+.modal h3 { font-size: 18px; font-weight: 600; margin-bottom: 8px; letter-spacing: -0.3px; }
+.modal p { font-size: 13px; color: var(--text2); margin-bottom: 1.5rem; line-height: 1.6; }
+
+.modal-actions { display: flex; gap: 10px; }
+
+.btn-modal-primary {
+  flex: 1;
+  padding: 10px;
+  background: var(--accent);
+  color: white;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-family: var(--font);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.btn-modal-secondary {
+  padding: 10px 16px;
+  background: var(--bg3);
+  color: var(--text2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-family: var(--font);
+  font-size: 14px;
+  cursor: pointer;
+}
+
+/* RESPONSIVE */
+@media (max-width: 768px) {
+  .sidebar { width: 60px; padding: 1rem 8px; }
+  .sidebar-logo-name, .nav-item span, .nav-section-title, .notion-status span { display: none; }
+  .nav-item { justify-content: center; padding: 10px; }
+  .main { margin-left: 60px; padding: 1.5rem 1rem; max-width: calc(100% - 60px); }
+  .metrics-grid { grid-template-columns: repeat(2, 1fr); }
+  .lancamento-layout { grid-template-columns: 1fr; }
+  .empresas-grid { grid-template-columns: 1fr; }
+  .comparar-grid { grid-template-columns: 1fr; }
+  .alertas-grid { grid-template-columns: 1fr; }
+}
+
+/* NOTION DB BADGE */
+.notion-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: var(--text3);
+  text-decoration: none;
+  padding: 4px 10px;
+  background: var(--bg3);
+  border-radius: var(--radius-xs);
+  border: 1px solid var(--border);
+  transition: .15s;
+}
+
+.notion-link:hover { color: var(--text2); border-color: var(--border2); }
+
+/* MARK PAID BTN */
+.btn-pago {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  font-size: 11px;
+  color: var(--text3);
+  cursor: pointer;
+  transition: .15s;
+  font-family: var(--font);
+}
+
+.btn-pago:hover { background: var(--green-bg); border-color: var(--green); color: var(--green); }
+</style>
+</head>
+<body>
+
+<!-- SETUP -->
+<div id="setup-screen">
+  <div class="setup-card">
+    <div class="setup-logo">
+      <svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+    </div>
+    <h1>Configurar acesso</h1>
+    <p>Conecte o app ao seu Notion e à API da IA para ativação completa. Só precisa configurar uma vez.</p>
+
+    <div class="setup-hint">
+      <strong style="color:var(--text)">Como obter as chaves:</strong><br>
+      1. <a href="https://www.notion.so/my-integrations" target="_blank">notion.so/my-integrations</a> → criar integração → copiar token<br>
+      2. <a href="https://console.anthropic.com" target="_blank">console.anthropic.com</a> → API Keys → criar chave<br>
+      3. Cole os IDs dos databases criados no seu Notion
+    </div>
+
+    <div class="form-group">
+      <label>Token da integração Notion</label>
+      <input type="password" id="notion-token" placeholder="secret_xxxxxxxxxxxxxxxxxxxx">
+    </div>
+    <div class="form-group">
+      <label>ID do database — Contas a Pagar</label>
+      <input type="text" id="db-contas" placeholder="c7e0311365f84b81b4f1129e357dd8f7" value="c7e0311365f84b81b4f1129e357dd8f7">
+    </div>
+    <div class="form-group">
+      <label>ID do database — Empresas</label>
+      <input type="text" id="db-empresas" placeholder="b9137defc34b4bcca8f9b8f2ebc126fd" value="b9137defc34b4bcca8f9b8f2ebc126fd">
+    </div>
+    <div class="form-group">
+      <label>Chave API Anthropic (leitura de boletos)</label>
+      <input type="password" id="anthropic-key" placeholder="sk-ant-xxxxxxxxxxxxxxxxxxxx">
+    </div>
+
+    <button class="btn-save" style="margin-top:1.5rem" onclick="salvarConfig()">
+      <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+      Salvar e entrar
+    </button>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app">
+  <div class="layout">
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+      <div class="sidebar-logo">
+        <div class="sidebar-logo-icon">
+          <svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+        </div>
+        <span class="sidebar-logo-name">Financeiro</span>
+      </div>
+
+      <div class="nav-section-title">Menu</div>
+
+      <button class="nav-item active" onclick="navTo('dashboard', this)">
+        <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+        <span>Dashboard</span>
+      </button>
+
+      <button class="nav-item" onclick="navTo('lancar', this)">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+        <span>Lançar boleto</span>
+      </button>
+
+      <button class="nav-item" onclick="navTo('empresas', this)">
+        <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+        <span>Empresas</span>
+      </button>
+
+      <button class="nav-item" onclick="navTo('comparar', this)">
+        <svg viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+        <span>Comparar</span>
+      </button>
+
+      <button class="nav-item" id="nav-alertas" onclick="navTo('alertas', this)">
+        <svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+        <span>Alertas</span>
+        <span class="nav-badge" id="badge-alertas" style="display:none">0</span>
+      </button>
+
+      <div class="sidebar-bottom">
+        <button class="nav-item" onclick="resetConfig()" style="margin-bottom:8px">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/><path d="M4.93 4.93a10 10 0 0 0 0 14.14"/></svg>
+          <span>Configurações</span>
+        </button>
+        <div class="notion-status">
+          <div class="notion-dot" id="notion-dot"></div>
+          <span id="notion-status-text">Notion</span>
+        </div>
+      </div>
+    </aside>
+
+    <!-- MAIN -->
+    <main class="main">
+
+      <!-- DASHBOARD -->
+      <div class="page active" id="page-dashboard">
+        <div class="page-header">
+          <div style="display:flex;align-items:flex-start;justify-content:space-between">
+            <div>
+              <h1>Dashboard</h1>
+              <p id="dash-subtitle">Carregando dados...</p>
+            </div>
+            <div style="display:flex;gap:8px;align-items:center">
+              <a href="https://www.notion.so/c7e0311365f84b81b4f1129e357dd8f7" target="_blank" class="notion-link">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M4 4h7V2H4a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h7v-2H4V4z"/><path d="M20.5 11.5l-2-2L17 11l1 1H9v2h9l-1 1 1.5 1.5 2-2 .5-.5-.5-.5z"/></svg>
+                Ver no Notion
+              </a>
+              <button class="btn-outline" onclick="carregarDados()">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+                Atualizar
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="metrics-grid" id="metrics-grid">
+          <div class="metric-card info">
+            <div class="metric-label">Total a vencer</div>
+            <div class="metric-value" id="m-total">—</div>
+            <div class="metric-sub">todas as empresas</div>
+          </div>
+          <div class="metric-card danger">
+            <div class="metric-label">Vence hoje</div>
+            <div class="metric-value danger" id="m-hoje">—</div>
+            <div class="metric-sub" id="m-hoje-count">—</div>
+          </div>
+          <div class="metric-card warning">
+            <div class="metric-label">Esta semana</div>
+            <div class="metric-value warning" id="m-semana">—</div>
+            <div class="metric-sub" id="m-semana-count">—</div>
+          </div>
+          <div class="metric-card danger">
+            <div class="metric-label">Atrasados</div>
+            <div class="metric-value danger" id="m-atrasados">—</div>
+            <div class="metric-sub">requer atenção</div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">Próximos vencimentos</span>
+            <span style="font-size:11px;color:var(--text3)">Pendentes e atrasados</span>
+          </div>
+          <div class="card-body">
+            <div id="table-container">
+              <div class="empty-state">
+                <div class="empty-icon">
+                  <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                </div>
+                <div class="empty-title">Carregando lançamentos...</div>
+                <div class="empty-text">Conectando ao Notion</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- LANÇAR -->
+      <div class="page" id="page-lancar">
+        <div class="page-header">
+          <h1>Lançar boleto</h1>
+          <p>Suba o PDF ou foto — a IA extrai os dados em segundos</p>
+        </div>
+
+        <div class="lancamento-layout">
+          <!-- ESQUERDA: upload + IA -->
+          <div>
+            <div class="upload-zone" id="upload-zone" onclick="document.getElementById('file-input').click()" ondragover="dragOver(event)" ondragleave="dragLeave(event)" ondrop="dropFile(event)">
+              <input type="file" id="file-input" accept=".pdf,image/*" onchange="processFile(event)">
+              <div class="upload-icon">
+                <svg viewBox="0 0 24 24"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/></svg>
+              </div>
+              <div class="upload-title">Arraste ou clique para subir</div>
+              <div class="upload-sub">PDF ou imagem do boleto</div>
+              <div class="upload-types">
+                <span class="upload-type-badge">PDF</span>
+                <span class="upload-type-badge">JPG</span>
+                <span class="upload-type-badge">PNG</span>
+              </div>
+            </div>
+
+            <div id="ai-reading" style="display:none">
+              <div class="card">
+                <div class="ai-reading">
+                  <div class="ai-spinner"></div>
+                  <div class="ai-reading-text">IA lendo o boleto...</div>
+                  <div class="ai-reading-sub">Extraindo valor, vencimento e cedente</div>
+                </div>
+              </div>
+            </div>
+
+            <div id="ai-result-area" style="display:none">
+              <div class="ai-result-box">
+                <div class="ai-result-header">
+                  <div class="ai-spark">
+                    <svg viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+                  </div>
+                  <div>
+                    <div class="ai-result-title">Dados extraídos pela IA</div>
+                    <div class="ai-result-sub">Revise e confirme antes de salvar</div>
+                  </div>
+                </div>
+                <div class="ai-fields">
+                  <div class="ai-field">
+                    <div class="ai-field-label">Cedente</div>
+                    <div class="ai-field-val" id="ai-cedente">—</div>
+                  </div>
+                  <div class="ai-field">
+                    <div class="ai-field-label">Valor</div>
+                    <div class="ai-field-val" id="ai-valor">—</div>
+                  </div>
+                  <div class="ai-field">
+                    <div class="ai-field-label">Vencimento</div>
+                    <div class="ai-field-val" id="ai-vencimento">—</div>
+                  </div>
+                  <div class="ai-field">
+                    <div class="ai-field-label">Linha digitável</div>
+                    <div class="ai-field-val mono" id="ai-linha">—</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- DIREITA: formulário -->
+          <div>
+            <div class="form-card">
+              <div class="form-section-title">Dados do lançamento</div>
+
+              <div class="fgroup">
+                <label>Descrição</label>
+                <input type="text" id="f-descricao" placeholder="Ex: Fornecedor Localfrio — Refrigeração">
+              </div>
+              <div class="fgroup">
+                <label>Empresa</label>
+                <select id="f-empresa">
+                  <option value="">Selecione a empresa...</option>
+                </select>
+              </div>
+              <div class="fgroup-row">
+                <div class="fgroup">
+                  <label>Valor (R$)</label>
+                  <input type="number" id="f-valor" placeholder="0,00" step="0.01">
+                </div>
+                <div class="fgroup">
+                  <label>Vencimento</label>
+                  <input type="date" id="f-vencimento">
+                </div>
+              </div>
+              <div class="fgroup-row">
+                <div class="fgroup">
+                  <label>Categoria</label>
+                  <select id="f-categoria">
+                    <option value="">Selecione...</option>
+                    <option>Aluguel</option>
+                    <option>Fornecedor</option>
+                    <option>Assinatura</option>
+                    <option>Imposto/Guia</option>
+                    <option>Folha de Pagamento</option>
+                    <option>Frete/Logística</option>
+                    <option>Outros</option>
+                  </select>
+                </div>
+                <div class="fgroup">
+                  <label>Tipo</label>
+                  <select id="f-tipo">
+                    <option>Boleto</option>
+                    <option>Recorrente</option>
+                    <option>PIX</option>
+                    <option>Débito Automático</option>
+                  </select>
+                </div>
+              </div>
+              <div class="fgroup">
+                <label>Cedente (quem cobra)</label>
+                <input type="text" id="f-cedente" placeholder="Nome do fornecedor ou credor">
+              </div>
+              <div class="fgroup">
+                <label>Observações</label>
+                <input type="text" id="f-obs" placeholder="Opcional">
+              </div>
+
+              <button class="btn-save" id="btn-salvar" onclick="salvarLancamento()">
+                <svg viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+                Salvar no Notion
+              </button>
+            </div>
+
+            <div id="wpp-result" style="display:none" class="wpp-box">
+              <div class="wpp-header">
+                <span class="wpp-icon">💬</span>
+                <span class="wpp-title">Mensagem WhatsApp pronta</span>
+              </div>
+              <div class="wpp-msg" id="wpp-text"></div>
+              <button class="btn-wpp" onclick="abrirWhatsapp()">
+                Abrir no WhatsApp
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- EMPRESAS -->
+      <div class="page" id="page-empresas">
+        <div class="page-header">
+          <div style="display:flex;align-items:flex-start;justify-content:space-between">
+            <div>
+              <h1>Empresas</h1>
+              <p>Visão individual de cada CNPJ</p>
+            </div>
+            <button class="btn-outline" onclick="abrirModalEmpresa()">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+              Nova empresa
+            </button>
+          </div>
+        </div>
+        <div class="empresas-grid" id="empresas-grid">
+          <div class="empty-state" style="grid-column:1/-1">
+            <div class="empty-icon">
+              <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+            </div>
+            <div class="empty-title">Carregando empresas...</div>
+            <div class="empty-text">Buscando no Notion</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- COMPARAR -->
+      <div class="page" id="page-comparar">
+        <div class="page-header">
+          <h1>Comparar</h1>
+          <p>Total a pagar por empresa no mês atual</p>
+        </div>
+        <div class="comparar-grid">
+          <div class="card">
+            <div class="card-header">
+              <span class="card-title">Por empresa</span>
+            </div>
+            <div class="card-body" style="padding:1.25rem" id="comparar-empresas">
+              <div class="empty-state"><div class="empty-text">Carregando...</div></div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header">
+              <span class="card-title">Por categoria</span>
+            </div>
+            <div class="card-body" style="padding:1.25rem" id="comparar-categorias">
+              <div class="empty-state"><div class="empty-text">Carregando...</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ALERTAS -->
+      <div class="page" id="page-alertas">
+        <div class="page-header">
+          <h1>Alertas</h1>
+          <p>Resumo de vencimentos para envio via WhatsApp</p>
+        </div>
+
+        <div class="alertas-grid" id="alertas-grid">
+          <div class="empty-state" style="grid-column:1/-1">
+            <div class="empty-text">Carregando alertas...</div>
+          </div>
+        </div>
+
+        <div style="display:flex;gap:10px;flex-wrap:wrap">
+          <button class="btn-wpp" onclick="enviarAlertaHoje()">💬 Alerta de hoje</button>
+          <button class="btn-wpp" onclick="enviarResumoSemanal()">💬 Resumo semanal</button>
+          <button class="btn-outline" onclick="enviarResumoMensal()">📋 Resumo mensal</button>
+        </div>
+      </div>
+
+    </main>
+  </div>
+</div>
+
+<!-- MODAL NOVA EMPRESA -->
+<div class="modal-overlay" id="modal-empresa">
+  <div class="modal">
+    <h3>Nova empresa</h3>
+    <p>Preencha os dados da empresa. Ela será adicionada ao Notion automaticamente.</p>
+    <div class="fgroup" style="margin-bottom:10px">
+      <label>Nome da empresa</label>
+      <input type="text" id="ne-nome" placeholder="Ex: Muller's Loja Física">
+    </div>
+    <div class="fgroup" style="margin-bottom:10px">
+      <label>CNPJ</label>
+      <input type="text" id="ne-cnpj" placeholder="00.000.000/0000-00">
+    </div>
+    <div class="fgroup" style="margin-bottom:1.5rem">
+      <label>Segmento</label>
+      <select id="ne-segmento">
+        <option>Varejo Físico</option>
+        <option>Marketplace</option>
+        <option>Importação</option>
+        <option>Outro</option>
+      </select>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-modal-secondary" onclick="fecharModal()">Cancelar</button>
+      <button class="btn-modal-primary" onclick="salvarEmpresa()">Salvar no Notion</button>
+    </div>
+  </div>
+</div>
+
+<!-- LOADING -->
+<div class="loading-overlay" id="loading" style="display:none">
+  <div class="loading-spinner"></div>
+  <div class="loading-text" id="loading-text">Processando...</div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast">
+  <div class="toast-icon success" id="toast-icon">
+    <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+  </div>
+  <div>
+    <div class="toast-text" id="toast-text">Salvo com sucesso!</div>
+    <div class="toast-sub" id="toast-sub"></div>
+  </div>
+</div>
+
+<script>
+// ─── CONFIG ───────────────────────────────────────────────
+const CONFIG = {
+  token: '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',
+  dbContas: 'c7e0311365f84b81b4f1129e357dd8f7',
+  dbEmpresas: 'b9137defc34b4bcca8f9b8f2ebc126fd',
+  anthropicKey: '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'
+};
+
+let DADOS = { contas: [], empresas: [] };
+let aiDados = {};
+
+function salvarConfig() {}
+function resetConfig() {}
+
+// ─── INIT ──────────────────────────────────────────────────
+window.addEventListener('DOMContentLoaded', () => {
+  iniciarApp();
+});
+
+function iniciarApp() {
+  document.getElementById('app').style.display = 'block';
+  setNotionStatus(true);
+  carregarDados();
+  carregarEmpresas();
+}
+
+function setNotionStatus(ok) {
+  const dot = document.getElementById('notion-dot');
+  const txt = document.getElementById('notion-status-text');
+  dot.className = 'notion-dot connected';
+  txt.textContent = 'Notion conectado';
+}
+
+// ─── NAVEGAÇÃO ────────────────────────────────────────────
+function navTo(page, btn) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+  document.getElementById('page-' + page).classList.add('active');
+  btn.classList.add('active');
+
+  if (page === 'empresas') renderEmpresas();
+  if (page === 'comparar') renderComparar();
+  if (page === 'alertas') renderAlertas();
+}
+
+// ─── NOTION API ───────────────────────────────────────────
+async function notionQuery(dbId, filter = null) {
+  const body = { page_size: 100 };
+  if (filter) body.filter = filter;
+
+  try {
+    const r = await fetch(`/api/notion?path=databases/${dbId}/query`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    });
+
+    if (!r.ok) throw new Error('Notion error ' + r.status);
+    const data = await r.json();
+    return data.results || [];
+  } catch (e) {
+    console.error('Notion query error:', e);
+    setNotionStatus(false);
+    return [];
+  }
+}
+
+async function notionCreate(dbId, properties) {
+  const r = await fetch('/api/notion?path=pages', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ parent: { database_id: dbId }, properties })
+  });
+
+  if (!r.ok) {
+    const err = await r.json();
+    throw new Error(err.message || 'Erro ao salvar');
+  }
+  return r.json();
+}
+
+async function notionUpdate(pageId, properties) {
+  const r = await fetch(`/api/notion?path=pages/${pageId}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ properties })
+  });
+  return r.json();
+}
+
+// ─── PARSEAR PÁGINAS NOTION ───────────────────────────────
+function parseConta(page) {
+  const p = page.properties;
+  return {
+    id: page.id,
+    descricao: p['Descrição']?.title?.[0]?.plain_text || '',
+    empresa: p['Empresa']?.rich_text?.[0]?.plain_text || '',
+    valor: p['Valor']?.number || 0,
+    vencimento: p['Vencimento']?.date?.start || '',
+    categoria: p['Categoria']?.select?.name || '',
+    status: p['Status']?.select?.name || 'Pendente',
+    tipo: p['Tipo']?.select?.name || '',
+    cedente: p['Cedente']?.rich_text?.[0]?.plain_text || '',
+  };
+}
+
+function parseEmpresa(page) {
+  const p = page.properties;
+  return {
+    id: page.id,
+    nome: p['Nome da Empresa']?.title?.[0]?.plain_text || '',
+    cnpj: p['CNPJ']?.rich_text?.[0]?.plain_text || '',
+    segmento: p['Segmento']?.select?.name || '',
+    status: p['Status']?.select?.name || 'Ativa',
+  };
+}
+
+// ─── CARREGAR DADOS ───────────────────────────────────────
+async function carregarDados() {
+  const pages = await notionQuery(CONFIG.dbContas);
+  DADOS.contas = pages.map(parseConta);
+  renderDashboard();
+  renderAlertas();
+  atualizarBadgeAlertas();
+}
+
+async function carregarEmpresas() {
+  const pages = await notionQuery(CONFIG.dbEmpresas);
+  DADOS.empresas = pages.map(parseEmpresa);
+  popularSelectEmpresas();
+  renderEmpresas();
+}
+
+function popularSelectEmpresas() {
+  const sel = document.getElementById('f-empresa');
+  sel.innerHTML = '<option value="">Selecione a empresa...</option>';
+  DADOS.empresas.forEach(e => {
+    sel.innerHTML += `<option value="${e.nome}">${e.nome}</option>`;
+  });
+}
+
+// ─── DASHBOARD ────────────────────────────────────────────
+function renderDashboard() {
+  const hoje = new Date();
+  hoje.setHours(0,0,0,0);
+  const semana = new Date(hoje); semana.setDate(semana.getDate() + 7);
+
+  const pendentes = DADOS.contas.filter(c => c.status !== 'Pago' && c.status !== 'Cancelado');
+
+  let totalPendente = 0, totalHoje = 0, totalSemana = 0, atrasados = 0;
+  let countHoje = 0, countSemana = 0;
+
+  pendentes.forEach(c => {
+    const v = new Date(c.vencimento + 'T00:00:00');
+    totalPendente += c.valor;
+    if (v < hoje) { atrasados++; }
+    if (v.toDateString() === hoje.toDateString()) { totalHoje += c.valor; countHoje++; }
+    if (v >= hoje && v <= semana) { totalSemana += c.valor; countSemana++; }
+  });
+
+  document.getElementById('m-total').textContent = fmtBRL(totalPendente);
+  document.getElementById('m-hoje').textContent = fmtBRL(totalHoje);
+  document.getElementById('m-hoje-count').textContent = `${countHoje} lançamento${countHoje !== 1 ? 's' : ''}`;
+  document.getElementById('m-semana').textContent = fmtBRL(totalSemana);
+  document.getElementById('m-semana-count').textContent = `${countSemana} lançamento${countSemana !== 1 ? 's' : ''}`;
+  document.getElementById('m-atrasados').textContent = atrasados;
+  document.getElementById('dash-subtitle').textContent = `Atualizado agora · ${pendentes.length} pendentes`;
+
+  renderTabela(pendentes, hoje, semana);
+}
+
+function renderTabela(pendentes, hoje, semana) {
+  if (!pendentes.length) {
+    document.getElementById('table-container').innerHTML = `
+      <div class="empty-state">
+        <div class="empty-icon"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div>
+        <div class="empty-title">Tudo em dia!</div>
+        <div class="empty-text">Nenhum pagamento pendente</div>
+      </div>`;
+    return;
+  }
+
+  const sorted = [...pendentes].sort((a,b) => new Date(a.vencimento) - new Date(b.vencimento));
+
+  let rows = sorted.map(c => {
+    const v = new Date(c.vencimento + 'T00:00:00');
+    const isAtrasado = v < hoje;
+    const isHoje = v.toDateString() === hoje.toDateString();
+    const isSemana = v > hoje && v <= semana;
+
+    const statusBadge = isAtrasado ? '<span class="badge badge-red"><span class="badge-dot"></span>Atrasado</span>'
+      : isHoje ? '<span class="badge badge-yellow"><span class="badge-dot"></span>Hoje</span>'
+      : isSemana ? '<span class="badge badge-yellow"><span class="badge-dot"></span>Esta semana</span>'
+      : '<span class="badge badge-gray">Futuro</span>';
+
+    const tipoBadge = c.tipo ? `<span class="badge badge-blue">${c.tipo}</span>` : '';
+
+    return `<tr>
+      <td>
+        <div style="font-weight:500;font-size:13px">${c.descricao || '—'}</div>
+        <div class="td-empresa">${c.empresa}</div>
+      </td>
+      <td>${c.categoria || '—'}</td>
+      <td>${statusBadge}</td>
+      <td>${tipoBadge}</td>
+      <td style="font-weight:600;color:var(--text)">${fmtBRL(c.valor)}</td>
+      <td style="color:var(--text2);font-size:12px">${fmtData(c.vencimento)}</td>
+      <td>
+        <button class="btn-pago" onclick="marcarPago('${c.id}', this)">
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          Pago
+        </button>
+      </td>
+    </tr>`;
+  }).join('');
+
+  document.getElementById('table-container').innerHTML = `
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Descrição</th>
+          <th>Categoria</th>
+          <th>Status</th>
+          <th>Tipo</th>
+          <th>Valor</th>
+          <th>Vencimento</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>${rows}</tbody>
+    </table>`;
+}
+
+async function marcarPago(pageId, btn) {
+  btn.disabled = true;
+  btn.textContent = '...';
+  try {
+    await notionUpdate(pageId, {
+      'Status': { select: { name: 'Pago' } }
+    });
+    await carregarDados();
+    showToast('Marcado como pago!', 'Atualizado no Notion', 'success');
+  } catch(e) {
+    showToast('Erro ao atualizar', e.message, 'error');
+    btn.disabled = false;
+    btn.textContent = 'Pago';
+  }
+}
+
+// ─── EMPRESAS ─────────────────────────────────────────────
+function renderEmpresas() {
+  const grid = document.getElementById('empresas-grid');
+  if (!DADOS.empresas.length) {
+    grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1">
+      <div class="empty-icon"><svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg></div>
+      <div class="empty-title">Nenhuma empresa cadastrada</div>
+      <div class="empty-text">Clique em "Nova empresa" para adicionar</div>
+    </div>`;
+    return;
+  }
+
+  grid.innerHTML = DADOS.empresas.map(emp => {
+    const contas = DADOS.contas.filter(c => c.empresa === emp.nome);
+    const pendentes = contas.filter(c => c.status === 'Pendente' || c.status === 'Atrasado');
+    const pagos = contas.filter(c => c.status === 'Pago');
+    const totalPendente = pendentes.reduce((s,c) => s + c.valor, 0);
+    const totalPago = pagos.reduce((s,c) => s + c.valor, 0);
+    const atrasados = contas.filter(c => {
+      const hoje = new Date(); hoje.setHours(0,0,0,0);
+      return c.status !== 'Pago' && c.status !== 'Cancelado' && new Date(c.vencimento + 'T00:00:00') < hoje;
+    }).length;
+
+    return `<div class="empresa-card">
+      <div class="empresa-card-header">
+        <div>
+          <div class="empresa-name">${emp.nome}</div>
+          <div class="empresa-seg">${emp.segmento}</div>
+        </div>
+        <span class="badge ${emp.status === 'Ativa' ? 'badge-green' : 'badge-gray'}">${emp.status}</span>
+      </div>
+      <div class="empresa-metrics">
+        <div class="emp-metric">
+          <div class="emp-metric-val">${fmtBRL(totalPendente)}</div>
+          <div class="emp-metric-label">A vencer</div>
+        </div>
+        <div class="emp-metric">
+          <div class="emp-metric-val">${fmtBRL(totalPago)}</div>
+          <div class="emp-metric-label">Pagos</div>
+        </div>
+        <div class="emp-metric">
+          <div class="emp-metric-val ${atrasados > 0 ? 'danger' : ''}">${atrasados}</div>
+          <div class="emp-metric-label">Atrasados</div>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ─── COMPARAR ────────────────────────────────────────────
+function renderComparar() {
+  const mes = new Date().getMonth();
+  const ano = new Date().getFullYear();
+
+  const contasMes = DADOS.contas.filter(c => {
+    if (!c.vencimento) return false;
+    const d = new Date(c.vencimento + 'T00:00:00');
+    return d.getMonth() === mes && d.getFullYear() === ano;
+  });
+
+  // Por empresa
+  const porEmpresa = {};
+  DADOS.empresas.forEach(e => { porEmpresa[e.nome] = 0; });
+  contasMes.forEach(c => {
+    if (!porEmpresa[c.empresa]) porEmpresa[c.empresa] = 0;
+    porEmpresa[c.empresa] += c.valor;
+  });
+
+  const empresasSorted = Object.entries(porEmpresa).sort((a,b) => b[1] - a[1]);
+  const maxEmp = Math.max(...empresasSorted.map(e => e[1]), 1);
+
+  document.getElementById('comparar-empresas').innerHTML = empresasSorted.map(([nome, val]) => `
+    <div class="bar-item">
+      <div class="bar-top">
+        <span class="bar-name">${nome}</span>
+        <span class="bar-val">${fmtBRL(val)}</span>
+      </div>
+      <div class="bar-track">
+        <div class="bar-fill" style="width:${Math.round(val/maxEmp*100)}%"></div>
+      </div>
+    </div>`).join('') || '<div class="empty-text">Sem dados este mês</div>';
+
+  // Por categoria
+  const porCat = {};
+  contasMes.forEach(c => {
+    if (!c.categoria) return;
+    if (!porCat[c.categoria]) porCat[c.categoria] = 0;
+    porCat[c.categoria] += c.valor;
+  });
+
+  const catSorted = Object.entries(porCat).sort((a,b) => b[1] - a[1]);
+  const maxCat = Math.max(...catSorted.map(c => c[1]), 1);
+
+  document.getElementById('comparar-categorias').innerHTML = catSorted.map(([cat, val]) => `
+    <div class="bar-item">
+      <div class="bar-top">
+        <span class="bar-name">${cat}</span>
+        <span class="bar-val">${fmtBRL(val)}</span>
+      </div>
+      <div class="bar-track">
+        <div class="bar-fill" style="width:${Math.round(val/maxCat*100)}%"></div>
+      </div>
+    </div>`).join('') || '<div class="empty-text">Sem dados</div>';
+}
+
+// ─── ALERTAS ─────────────────────────────────────────────
+function renderAlertas() {
+  const hoje = new Date(); hoje.setHours(0,0,0,0);
+  const semana = new Date(hoje); semana.setDate(semana.getDate() + 7);
+
+  const atrasados = DADOS.contas.filter(c => {
+    if (c.status === 'Pago' || c.status === 'Cancelado') return false;
+    const v = new Date(c.vencimento + 'T00:00:00');
+    return v < hoje;
+  });
+
+  const venHoje = DADOS.contas.filter(c => {
+    if (c.status === 'Pago') return false;
+    const v = new Date(c.vencimento + 'T00:00:00');
+    return v.toDateString() === hoje.toDateString();
+  });
+
+  const venSemana = DADOS.contas.filter(c => {
+    if (c.status === 'Pago') return false;
+    const v = new Date(c.vencimento + 'T00:00:00');
+    return v > hoje && v <= semana;
+  });
+
+  atualizarBadgeAlertas(atrasados.length + venHoje.length);
+
+  const grid = document.getElementById('alertas-grid');
+  if (!grid) return;
+
+  grid.innerHTML = `
+    <div class="alerta-card">
+      <div class="alerta-title" style="color:var(--red)">🔴 Atrasados (${atrasados.length})</div>
+      ${atrasados.slice(0,5).map(c => `
+        <div class="alerta-item">
+          <span class="alerta-item-name">${c.descricao} <span style="color:var(--text3)">${c.empresa}</span></span>
+          <span class="alerta-item-val danger">${fmtBRL(c.valor)}</span>
+        </div>`).join('') || '<div style="font-size:12px;color:var(--text3);padding:8px 0">Nenhum atrasado 👍</div>'}
+    </div>
+    <div class="alerta-card">
+      <div class="alerta-title" style="color:var(--yellow)">🟡 Vence hoje (${venHoje.length})</div>
+      ${venHoje.map(c => `
+        <div class="alerta-item">
+          <span class="alerta-item-name">${c.descricao}</span>
+          <span class="alerta-item-val warning">${fmtBRL(c.valor)}</span>
+        </div>`).join('') || '<div style="font-size:12px;color:var(--text3);padding:8px 0">Nenhum vence hoje</div>'}
+    </div>
+    <div class="alerta-card" style="grid-column:1/-1">
+      <div class="alerta-title" style="color:var(--text2)">📅 Esta semana (${venSemana.length})</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:0">
+      ${venSemana.map(c => `
+        <div class="alerta-item">
+          <span class="alerta-item-name">${c.descricao} <span style="color:var(--text3)">· ${fmtData(c.vencimento)}</span></span>
+          <span class="alerta-item-val">${fmtBRL(c.valor)}</span>
+        </div>`).join('') || '<div style="font-size:12px;color:var(--text3);padding:8px 0">Nenhum esta semana</div>'}
+      </div>
+    </div>`;
+}
+
+function atualizarBadgeAlertas(count) {
+  const badge = document.getElementById('badge-alertas');
+  if (!count) { count = 0; }
+  if (!DADOS.contas) return;
+
+  const hoje = new Date(); hoje.setHours(0,0,0,0);
+  const urgentes = DADOS.contas.filter(c => {
+    if (c.status === 'Pago' || c.status === 'Cancelado') return false;
+    const v = new Date(c.vencimento + 'T00:00:00');
+    return v <= hoje;
+  }).length;
+
+  if (urgentes > 0) {
+    badge.textContent = urgentes;
+    badge.style.display = 'block';
+  } else {
+    badge.style.display = 'none';
+  }
+}
+
+function gerarMsgHoje() {
+  const hoje = new Date(); hoje.setHours(0,0,0,0);
+  const atrasados = DADOS.contas.filter(c => {
+    if (c.status === 'Pago' || c.status === 'Cancelado') return false;
+    return new Date(c.vencimento + 'T00:00:00') < hoje;
+  });
+  const venHoje = DADOS.contas.filter(c => {
+    if (c.status === 'Pago') return false;
+    return new Date(c.vencimento + 'T00:00:00').toDateString() === hoje.toDateString();
+  });
+
+  const dataStr = hoje.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' });
+  let msg = `📋 *Controle Financeiro — ${dataStr}*\n\n`;
+
+  if (atrasados.length) {
+    msg += `🔴 *ATRASADOS (${atrasados.length})*\n`;
+    atrasados.forEach(c => { msg += `• ${c.descricao} — ${fmtBRL(c.valor)}\n`; });
+    msg += '\n';
+  }
+
+  if (venHoje.length) {
+    msg += `🟡 *VENCE HOJE*\n`;
+    venHoje.forEach(c => { msg += `• ${c.descricao} (${c.empresa}) — ${fmtBRL(c.valor)}\n`; });
+    msg += '\n';
+  }
+
+  const totalUrgente = [...atrasados, ...venHoje].reduce((s,c) => s + c.valor, 0);
+  msg += `💰 *Total urgente: ${fmtBRL(totalUrgente)}*`;
+  return msg;
+}
+
+function enviarAlertaHoje() {
+  const msg = gerarMsgHoje();
+  abrirWhatsappMsg(msg);
+}
+
+function enviarResumoSemanal() {
+  const hoje = new Date(); hoje.setHours(0,0,0,0);
+  const semana = new Date(hoje); semana.setDate(semana.getDate() + 7);
+  const pendentes = DADOS.contas.filter(c => {
+    if (c.status === 'Pago' || c.status === 'Cancelado') return false;
+    const v = new Date(c.vencimento + 'T00:00:00');
+    return v >= hoje && v <= semana;
+  });
+
+  let msg = `📅 *Resumo semanal — ${hoje.toLocaleDateString('pt-BR', { day:'2-digit', month:'short' })}*\n\n`;
+  pendentes.forEach(c => { msg += `• ${c.descricao} (${c.empresa}) · ${fmtData(c.vencimento)} — ${fmtBRL(c.valor)}\n`; });
+  const total = pendentes.reduce((s,c) => s + c.valor, 0);
+  msg += `\n💰 Total da semana: ${fmtBRL(total)}`;
+  abrirWhatsappMsg(msg);
+}
+
+function enviarResumoMensal() {
+  const mes = new Date().getMonth();
+  const ano = new Date().getFullYear();
+  const contasMes = DADOS.contas.filter(c => {
+    if (!c.vencimento) return false;
+    const d = new Date(c.vencimento + 'T00:00:00');
+    return d.getMonth() === mes && d.getFullYear() === ano;
+  });
+
+  const meses = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+  let msg = `📊 *Relatório ${meses[mes]}/${ano}*\n\n`;
+
+  DADOS.empresas.forEach(emp => {
+    const contas = contasMes.filter(c => c.empresa === emp.nome);
+    if (!contas.length) return;
+    const total = contas.reduce((s,c) => s + c.valor, 0);
+    msg += `🏢 ${emp.nome}: ${fmtBRL(total)}\n`;
+  });
+
+  const total = contasMes.reduce((s,c) => s + c.valor, 0);
+  msg += `\n💰 *Total do mês: ${fmtBRL(total)}*`;
+  abrirWhatsappMsg(msg);
+}
+
+function abrirWhatsappMsg(msg) {
+  window.open('https://wa.me/?text=' + encodeURIComponent(msg), '_blank');
+}
+
+// ─── LANÇAR BOLETO ────────────────────────────────────────
+function dragOver(e) { e.preventDefault(); document.getElementById('upload-zone').classList.add('dragover'); }
+function dragLeave() { document.getElementById('upload-zone').classList.remove('dragover'); }
+function dropFile(e) { e.preventDefault(); dragLeave(); const f = e.dataTransfer.files[0]; if (f) processarArquivo(f); }
+function processFile(e) { const f = e.target.files[0]; if (f) processarArquivo(f); }
+
+async function processarArquivo(file) {
+  document.getElementById('upload-zone').style.display = 'none';
+  document.getElementById('ai-reading').style.display = 'block';
+  document.getElementById('ai-result-area').style.display = 'none';
+
+  try {
+    const base64 = await fileToBase64(file);
+    const isPdf = file.type === 'application/pdf';
+    const extracted = await extrairDadosIA(base64, file.type, isPdf);
+
+    document.getElementById('ai-reading').style.display = 'none';
+    document.getElementById('ai-result-area').style.display = 'block';
+
+    aiDados = extracted;
+
+    document.getElementById('ai-cedente').textContent = extracted.cedente || '—';
+    document.getElementById('ai-valor').textContent = extracted.valor ? `R$ ${Number(extracted.valor).toLocaleString('pt-BR', {minimumFractionDigits:2})}` : '—';
+    document.getElementById('ai-vencimento').textContent = extracted.vencimento ? fmtData(extracted.vencimento) : '—';
+    document.getElementById('ai-linha').textContent = extracted.linha || '—';
+
+    // Preencher formulário
+    if (extracted.cedente) document.getElementById('f-cedente').value = extracted.cedente;
+    if (extracted.cedente) document.getElementById('f-descricao').value = extracted.cedente;
+    if (extracted.valor) document.getElementById('f-valor').value = extracted.valor;
+    if (extracted.vencimento) document.getElementById('f-vencimento').value = extracted.vencimento;
+
+  } catch(e) {
+    console.error(e);
+    document.getElementById('ai-reading').style.display = 'none';
+    document.getElementById('upload-zone').style.display = 'block';
+    showToast('Erro na leitura', 'Preencha os dados manualmente', 'error');
+  }
+}
+
+function fileToBase64(file) {
+  return new Promise((res, rej) => {
+    const r = new FileReader();
+    r.onload = () => res(r.result.split(',')[1]);
+    r.onerror = rej;
+    r.readAsDataURL(file);
+  });
+}
+
+async function extrairDadosIA(base64, mediaType, isPdf) {
+  if (!CONFIG.anthropicKey) {
+    // Sem chave: retornar mock para demonstração
+    await new Promise(r => setTimeout(r, 1500));
+    return { cedente: 'Fornecedor Exemplo Ltda', valor: '4580.00', vencimento: new Date(Date.now() + 9*864e5).toISOString().split('T')[0], linha: '34191.09008 01234.567890' };
+  }
+
+  const content = isPdf
+    ? [{ type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: base64 } },
+       { type: 'text', text: 'Extraia do boleto: cedente (quem emitiu), valor total, data de vencimento (formato YYYY-MM-DD) e linha digitável. Responda SOMENTE em JSON: {"cedente":"","valor":"","vencimento":"","linha":""}' }]
+    : [{ type: 'image', source: { type: 'base64', media_type: mediaType, data: base64 } },
+       { type: 'text', text: 'Extraia do boleto: cedente (quem emitiu), valor total, data de vencimento (formato YYYY-MM-DD) e linha digitável. Responda SOMENTE em JSON: {"cedente":"","valor":"","vencimento":"","linha":""}' }];
+
+  const r = await fetch('/api/anthropic', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ model: 'claude-opus-4-5', max_tokens: 500, messages: [{ role: 'user', content }] })
+  });
+
+  const data = await r.json();
+  const text = data.content?.[0]?.text || '{}';
+  const clean = text.replace(/```json|```/g, '').trim();
+  return JSON.parse(clean);
+}
+
+async function salvarLancamento() {
+  const descricao = document.getElementById('f-descricao').value.trim();
+  const empresa = document.getElementById('f-empresa').value;
+  const valor = parseFloat(document.getElementById('f-valor').value);
+  const vencimento = document.getElementById('f-vencimento').value;
+  const categoria = document.getElementById('f-categoria').value;
+  const tipo = document.getElementById('f-tipo').value;
+  const cedente = document.getElementById('f-cedente').value.trim();
+  const obs = document.getElementById('f-obs').value.trim();
+
+  if (!descricao || !empresa || !valor || !vencimento) {
+    showToast('Preencha os campos obrigatórios', 'Descrição, empresa, valor e vencimento', 'error');
+    return;
+  }
+
+  const btn = document.getElementById('btn-salvar');
+  btn.disabled = true;
+  btn.innerHTML = '<div class="ai-spinner" style="width:18px;height:18px;border-width:2px;margin:0"></div> Salvando...';
+
+  try {
+    const properties = {
+      'Descrição': { title: [{ text: { content: descricao } }] },
+      'Empresa': { rich_text: [{ text: { content: empresa } }] },
+      'Valor': { number: valor },
+      'Vencimento': { date: { start: vencimento } },
+      'Status': { select: { name: 'Pendente' } },
+    };
+
+    if (categoria) properties['Categoria'] = { select: { name: categoria } };
+    if (tipo) properties['Tipo'] = { select: { name: tipo } };
+    if (cedente) properties['Cedente'] = { rich_text: [{ text: { content: cedente } }] };
+    if (obs) properties['Observações'] = { rich_text: [{ text: { content: obs } }] };
+
+    await notionCreate(CONFIG.dbContas, properties);
+
+    showToast('Salvo no Notion!', `${descricao} — ${fmtBRL(valor)}`, 'success');
+
+    // Gerar preview WhatsApp
+    const diasAte = Math.ceil((new Date(vencimento + 'T00:00:00') - new Date()) / 864e5);
+    const urgencia = diasAte < 0 ? '🔴 ATRASADO' : diasAte === 0 ? '🔴 Vence HOJE' : diasAte <= 3 ? `🟡 Vence em ${diasAte} dias` : `🟢 Vence em ${diasAte} dias`;
+    const wppMsg = `📋 *Novo lançamento registrado*\n🏢 Empresa: ${empresa}\n📄 ${descricao}\n💰 Valor: ${fmtBRL(valor)}\n📅 Vencimento: ${fmtData(vencimento)}\n${urgencia}`;
+
+    document.getElementById('wpp-text').textContent = wppMsg;
+    document.getElementById('wpp-result').style.display = 'block';
+    document.getElementById('wpp-result').scrollIntoView({ behavior: 'smooth' });
+
+    window._lastWppMsg = wppMsg;
+
+    btn.innerHTML = '✓ Salvo no Notion';
+    btn.style.opacity = '0.6';
+
+    await carregarDados();
+
+  } catch(e) {
+    showToast('Erro ao salvar', e.message, 'error');
+    btn.disabled = false;
+    btn.innerHTML = '<svg viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg> Salvar no Notion';
+    btn.style.opacity = '1';
+  }
+}
+
+function abrirWhatsapp() {
+  const msg = window._lastWppMsg || '';
+  abrirWhatsappMsg(msg);
+}
+
+// ─── EMPRESAS MODAL ───────────────────────────────────────
+function abrirModalEmpresa() { document.getElementById('modal-empresa').classList.add('open'); }
+function fecharModal() { document.getElementById('modal-empresa').classList.remove('open'); }
+
+async function salvarEmpresa() {
+  const nome = document.getElementById('ne-nome').value.trim();
+  const cnpj = document.getElementById('ne-cnpj').value.trim();
+  const segmento = document.getElementById('ne-segmento').value;
+
+  if (!nome) { showToast('Informe o nome da empresa', '', 'error'); return; }
+
+  try {
+    await notionCreate(CONFIG.dbEmpresas, {
+      'Nome da Empresa': { title: [{ text: { content: nome } }] },
+      'CNPJ': { rich_text: [{ text: { content: cnpj } }] },
+      'Segmento': { select: { name: segmento } },
+      'Status': { select: { name: 'Ativa' } }
+    });
+    fecharModal();
+    showToast('Empresa criada!', nome, 'success');
+    await carregarEmpresas();
+    renderEmpresas();
+  } catch(e) {
+    showToast('Erro ao criar empresa', e.message, 'error');
+  }
+}
+
+// ─── UTILS ────────────────────────────────────────────────
+function fmtBRL(val) {
+  if (!val && val !== 0) return 'R$ —';
+  return `R$ ${Number(val).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+}
+
+function fmtData(str) {
+  if (!str) return '—';
+  const d = new Date(str + 'T00:00:00');
+  return d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+}
+
+function showToast(text, sub, type) {
+  const toast = document.getElementById('toast');
+  const icon = document.getElementById('toast-icon');
+  document.getElementById('toast-text').textContent = text;
+  document.getElementById('toast-sub').textContent = sub || '';
+
+  icon.className = 'toast-icon ' + (type || 'success');
+  icon.innerHTML = type === 'error'
+    ? '<svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>'
+    : '<svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>';
+
+  toast.classList.add('show');
+  setTimeout(() => toast.classList.remove('show'), 4000);
+}
+
+// Fechar modal clicando fora
+document.getElementById('modal-empresa').addEventListener('click', function(e) {
+  if (e.target === this) fecharModal();
+});
+</script>
+</body>
+</html>
