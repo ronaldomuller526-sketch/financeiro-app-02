@@ -5,7 +5,7 @@ export default async function handler(req, res) {
 
   if (req.method === 'OPTIONS') return res.status(200).end();
 
-  const NOTION_TOKEN = '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';
+  const NOTION_TOKEN = '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';
   const path = req.query.path || '';
   const url = `https://api.notion.com/v1/${path}`;
 
