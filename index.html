@@ -1410,6 +1410,18 @@ body {
   </div>
 </div>
 
+<!-- MODAL BOLETOS EMPRESA -->
+<div class="modal-overlay" id="modal-boletos">
+  <div class="modal" style="max-width:780px;width:95%">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+      <h3 id="modal-boletos-title" style="font-size:18px"></h3>
+      <button onclick="fecharModalBoletos()" style="background:none;border:none;color:var(--text2);cursor:pointer;font-size:20px;padding:4px">×</button>
+    </div>
+    <p id="modal-boletos-total" style="font-size:13px;color:var(--text2);margin-bottom:1.25rem"></p>
+    <div id="modal-boletos-body" style="max-height:60vh;overflow-y:auto"></div>
+  </div>
+</div>
+
 <!-- MODAL NOVA EMPRESA -->
 <div class="modal-overlay" id="modal-empresa">
   <div class="modal">
@@ -1751,7 +1763,7 @@ function renderEmpresas() {
       return c.status !== 'Pago' && c.status !== 'Cancelado' && new Date(c.vencimento + 'T00:00:00') < hoje;
     }).length;
 
-    return `<div class="empresa-card">
+    return `<div class="empresa-card" onclick="abrirBoletos('${emp.nome.replace(/'/g, "\\'")}')">
       <div class="empresa-card-header">
         <div>
           <div class="empresa-name">${emp.nome}</div>
@@ -1773,8 +1785,92 @@ function renderEmpresas() {
           <div class="emp-metric-label">Atrasados</div>
         </div>
       </div>
+      <div style="margin-top:10px;font-size:11px;color:var(--text3);text-align:right">Ver boletos →</div>
     </div>`;
   }).join('');
+}
+
+function abrirBoletos(nomeEmpresa) {
+  const hoje = new Date(); hoje.setHours(0,0,0,0);
+  const semana = new Date(hoje); semana.setDate(semana.getDate() + 7);
+
+  const pendentes = DADOS.contas
+    .filter(c => c.empresa === nomeEmpresa && c.status !== 'Pago' && c.status !== 'Cancelado')
+    .sort((a,b) => new Date(a.vencimento) - new Date(b.vencimento));
+
+  const total = pendentes.reduce((s,c) => s + c.valor, 0);
+
+  const rows = pendentes.map(c => {
+    const v = new Date(c.vencimento + 'T00:00:00');
+    const isAtrasado = v < hoje;
+    const isHoje = v.toDateString() === hoje.toDateString();
+    const isSemana = v > hoje && v <= semana;
+
+    const statusBadge = isAtrasado
+      ? '<span class="badge badge-red"><span class="badge-dot"></span>Atrasado</span>'
+      : isHoje ? '<span class="badge badge-yellow"><span class="badge-dot"></span>Hoje</span>'
+      : isSemana ? '<span class="badge badge-yellow"><span class="badge-dot"></span>Esta semana</span>'
+      : '<span class="badge badge-gray">Futuro</span>';
+
+    const linha = c.cedente && c.cedente.length > 10 ? c.cedente : '';
+    const linhaId = 'bl_' + Math.random().toString(36).substr(2,6);
+    const linhaHtml = linha
+      ? `<div style="display:flex;align-items:center;gap:6px;margin-top:3px">
+          <span style="font-size:10px;color:var(--text3);font-family:var(--mono);max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${linha}</span>
+          <button onclick="event.stopPropagation();navigator.clipboard.writeText('${linha.replace(/'/g,'')}').then(()=>{this.textContent='✓';setTimeout(()=>this.textContent='copiar',2000)})" style="flex-shrink:0;padding:1px 6px;background:var(--bg3);border:0.5px solid var(--border);border-radius:4px;font-size:10px;color:var(--text2);cursor:pointer;font-family:var(--font)">copiar</button>
+        </div>` : '';
+
+    return `<tr>
+      <td>
+        <div style="font-weight:500;font-size:13px">${c.descricao || '—'}</div>
+        <div class="td-empresa">${c.categoria || ''}</div>
+        ${linhaHtml}
+      </td>
+      <td>${statusBadge}</td>
+      <td style="font-size:12px;color:var(--text2)">${fmtData(c.vencimento)}</td>
+      <td style="font-weight:600">${fmtBRL(c.valor)}</td>
+      <td>
+        <button class="btn-pago" onclick="event.stopPropagation();marcarPagoModal('${c.id}', this)">
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          Pago
+        </button>
+      </td>
+    </tr>`;
+  }).join('');
+
+  const modal = document.getElementById('modal-boletos');
+  document.getElementById('modal-boletos-title').textContent = nomeEmpresa;
+  document.getElementById('modal-boletos-total').textContent = `${pendentes.length} pendentes · ${fmtBRL(total)}`;
+  document.getElementById('modal-boletos-body').innerHTML = pendentes.length
+    ? `<table class="data-table" style="width:100%">
+        <thead><tr>
+          <th>Descrição</th><th>Status</th><th>Vencimento</th><th>Valor</th><th></th>
+        </tr></thead>
+        <tbody>${rows}</tbody>
+      </table>`
+    : `<div class="empty-state"><div class="empty-title">Nenhum boleto pendente</div></div>`;
+
+  modal.classList.add('open');
+}
+
+async function marcarPagoModal(pageId, btn) {
+  btn.disabled = true;
+  btn.textContent = '...';
+  try {
+    await notionUpdate(pageId, { 'Status': { select: { name: 'Pago' } } });
+    await carregarDados();
+    renderEmpresas();
+    fecharModalBoletos();
+    showToast('Marcado como pago!', 'Atualizado no Notion', 'success');
+  } catch(e) {
+    showToast('Erro ao atualizar', e.message, 'error');
+    btn.disabled = false;
+    btn.textContent = 'Pago';
+  }
+}
+
+function fecharModalBoletos() {
+  document.getElementById('modal-boletos').classList.remove('open');
 }
 
 // ─── COMPARAR ────────────────────────────────────────────
@@ -2342,6 +2438,10 @@ function showToast(text, sub, type) {
   toast.classList.add('show');
   setTimeout(() => toast.classList.remove('show'), 4000);
 }
+
+document.getElementById('modal-boletos').addEventListener('click', function(e) {
+  if (e.target === this) fecharModalBoletos();
+});
 
 // Fechar modal clicando fora
 document.getElementById('modal-empresa').addEventListener('click', function(e) {
