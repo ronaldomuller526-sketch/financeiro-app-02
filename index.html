@@ -1024,6 +1024,11 @@ body {
         <span class="nav-badge" id="badge-alertas" style="display:none">0</span>
       </button>
 
+      <button class="nav-item" onclick="navTo('fechamento', this)">
+        <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+        <span>Fechamento</span>
+      </button>
+
       <div class="sidebar-bottom">
         <button class="nav-item" onclick="resetConfig()" style="margin-bottom:8px">
           <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/><path d="M4.93 4.93a10 10 0 0 0 0 14.14"/></svg>
@@ -1325,6 +1330,82 @@ body {
         </div>
       </div>
 
+      <!-- FECHAMENTO -->
+      <div class="page" id="page-fechamento">
+        <div class="page-header">
+          <div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:1rem">
+            <div>
+              <h1>Fechamento mensal</h1>
+              <p>Saídas realizadas por empresa e categoria</p>
+            </div>
+            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+              <select id="f-mes-sel" onchange="renderFechamento()" style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:7px 12px;color:var(--text);font-family:var(--font);font-size:13px;outline:none"></select>
+              <select id="f-emp-sel" onchange="renderFechamento()" style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:7px 12px;color:var(--text);font-family:var(--font);font-size:13px;outline:none">
+                <option value="todas">Todas as empresas</option>
+              </select>
+              <button class="btn-outline" onclick="exportarFechamentoWpp()">💬 Enviar resumo</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- MÉTRICAS DO MÊS -->
+        <div class="metrics-grid" style="margin-bottom:1.5rem">
+          <div class="metric-card info">
+            <div class="metric-label">Total saídas</div>
+            <div class="metric-value" id="fech-total">—</div>
+            <div class="metric-sub">pagamentos realizados</div>
+          </div>
+          <div class="metric-card success">
+            <div class="metric-label">Transações</div>
+            <div class="metric-value" id="fech-count">—</div>
+            <div class="metric-sub">lançamentos pagos</div>
+          </div>
+          <div class="metric-card warning">
+            <div class="metric-label">Maior gasto</div>
+            <div class="metric-value" id="fech-maior-val" style="font-size:18px">—</div>
+            <div class="metric-sub" id="fech-maior-cat">—</div>
+          </div>
+          <div class="metric-card danger">
+            <div class="metric-label">Empresas</div>
+            <div class="metric-value" id="fech-empresas-count">—</div>
+            <div class="metric-sub">com saídas no mês</div>
+          </div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;margin-bottom:1.5rem">
+          <!-- POR CATEGORIA -->
+          <div class="card">
+            <div class="card-header">
+              <span class="card-title">Por categoria</span>
+            </div>
+            <div class="card-body" style="padding:1.25rem" id="fech-categorias">
+              <div class="empty-state"><div class="empty-text">Selecione um mês</div></div>
+            </div>
+          </div>
+
+          <!-- POR EMPRESA -->
+          <div class="card">
+            <div class="card-header">
+              <span class="card-title">Por empresa</span>
+            </div>
+            <div class="card-body" style="padding:1.25rem" id="fech-empresas">
+              <div class="empty-state"><div class="empty-text">Selecione um mês</div></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- TABELA DETALHADA -->
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">Lançamentos pagos</span>
+            <span style="font-size:11px;color:var(--text3)" id="fech-table-count">—</span>
+          </div>
+          <div class="card-body" id="fech-tabela">
+            <div class="empty-state"><div class="empty-text">Selecione um mês</div></div>
+          </div>
+        </div>
+      </div>
+
     </main>
   </div>
 </div>
@@ -1419,6 +1500,7 @@ function navTo(page, btn) {
   if (page === 'empresas') renderEmpresas();
   if (page === 'comparar') renderComparar();
   if (page === 'alertas') renderAlertas();
+  if (page === 'fechamento') iniciarFechamento();
 }
 
 // ─── NOTION API ───────────────────────────────────────────
@@ -2064,6 +2146,165 @@ async function salvarEmpresa() {
   } catch(e) {
     showToast('Erro ao criar empresa', e.message, 'error');
   }
+}
+
+// ─── FECHAMENTO ──────────────────────────────────────────
+function iniciarFechamento() {
+  const sel = document.getElementById('f-mes-sel');
+  if (sel.options.length === 0) {
+    const meses = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+    const hoje = new Date();
+    for (let i = 0; i < 12; i++) {
+      const d = new Date(hoje.getFullYear(), hoje.getMonth() - i, 1);
+      const opt = document.createElement('option');
+      opt.value = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+      opt.textContent = `${meses[d.getMonth()]} ${d.getFullYear()}`;
+      if (i === 0) opt.selected = true;
+      sel.appendChild(opt);
+    }
+  }
+
+  // Popular empresas no select
+  const empSel = document.getElementById('f-emp-sel');
+  if (empSel.options.length === 1) {
+    DADOS.empresas.forEach(e => {
+      const opt = document.createElement('option');
+      opt.value = e.nome;
+      opt.textContent = e.nome;
+      empSel.appendChild(opt);
+    });
+  }
+
+  renderFechamento();
+}
+
+function renderFechamento() {
+  const mesSel = document.getElementById('f-mes-sel').value;
+  const empSel = document.getElementById('f-emp-sel').value;
+  if (!mesSel) return;
+
+  const [ano, mes] = mesSel.split('-').map(Number);
+
+  let pagos = DADOS.contas.filter(c => {
+    if (c.status !== 'Pago') return false;
+    if (!c.vencimento) return false;
+    const d = new Date(c.vencimento + 'T00:00:00');
+    return d.getFullYear() === ano && d.getMonth() + 1 === mes;
+  });
+
+  if (empSel !== 'todas') {
+    pagos = pagos.filter(c => c.empresa === empSel);
+  }
+
+  // Métricas
+  const total = pagos.reduce((s,c) => s + c.valor, 0);
+  document.getElementById('fech-total').textContent = fmtBRL(total);
+  document.getElementById('fech-count').textContent = pagos.length;
+
+  // Maior categoria
+  const porCat = {};
+  pagos.forEach(c => {
+    const cat = c.categoria || 'Outros';
+    if (!porCat[cat]) porCat[cat] = 0;
+    porCat[cat] += c.valor;
+  });
+  const catSorted = Object.entries(porCat).sort((a,b) => b[1]-a[1]);
+  if (catSorted.length) {
+    document.getElementById('fech-maior-val').textContent = fmtBRL(catSorted[0][1]);
+    document.getElementById('fech-maior-cat').textContent = catSorted[0][0];
+  } else {
+    document.getElementById('fech-maior-val').textContent = '—';
+    document.getElementById('fech-maior-cat').textContent = '—';
+  }
+
+  // Empresas com saídas
+  const empresasComSaidas = new Set(pagos.map(c => c.empresa)).size;
+  document.getElementById('fech-empresas-count').textContent = empresasComSaidas;
+
+  // Por categoria
+  const maxCat = Math.max(...catSorted.map(c => c[1]), 1);
+  document.getElementById('fech-categorias').innerHTML = catSorted.length
+    ? catSorted.map(([cat, val]) => `
+      <div class="bar-item">
+        <div class="bar-top">
+          <span class="bar-name">${cat}</span>
+          <span class="bar-val">${fmtBRL(val)}</span>
+        </div>
+        <div class="bar-track"><div class="bar-fill" style="width:${Math.round(val/maxCat*100)}%"></div></div>
+      </div>`).join('')
+    : '<div class="empty-text" style="padding:1rem;color:var(--text3)">Nenhum pagamento neste mês</div>';
+
+  // Por empresa
+  const porEmp = {};
+  pagos.forEach(c => {
+    if (!porEmp[c.empresa]) porEmp[c.empresa] = 0;
+    porEmp[c.empresa] += c.valor;
+  });
+  const empSorted = Object.entries(porEmp).sort((a,b) => b[1]-a[1]);
+  const maxEmp = Math.max(...empSorted.map(e => e[1]), 1);
+  document.getElementById('fech-empresas').innerHTML = empSorted.length
+    ? empSorted.map(([emp, val]) => `
+      <div class="bar-item">
+        <div class="bar-top">
+          <span class="bar-name">${emp}</span>
+          <span class="bar-val">${fmtBRL(val)}</span>
+        </div>
+        <div class="bar-track"><div class="bar-fill" style="width:${Math.round(val/maxEmp*100)}%"></div></div>
+      </div>`).join('')
+    : '<div class="empty-text" style="padding:1rem;color:var(--text3)">Nenhum dado</div>';
+
+  // Tabela detalhada
+  document.getElementById('fech-table-count').textContent = `${pagos.length} lançamentos`;
+  const sorted = [...pagos].sort((a,b) => new Date(a.vencimento) - new Date(b.vencimento));
+  document.getElementById('fech-tabela').innerHTML = sorted.length
+    ? `<table class="data-table">
+        <thead><tr>
+          <th>Descrição</th><th>Empresa</th><th>Categoria</th><th>Tipo</th><th>Valor</th><th>Data</th>
+        </tr></thead>
+        <tbody>${sorted.map(c => `<tr>
+          <td style="font-weight:500;font-size:13px">${c.descricao || '—'}</td>
+          <td style="font-size:12px;color:var(--text2)">${c.empresa}</td>
+          <td>${c.categoria ? `<span class="badge badge-gray">${c.categoria}</span>` : '—'}</td>
+          <td>${c.tipo ? `<span class="badge badge-blue">${c.tipo}</span>` : '—'}</td>
+          <td style="font-weight:600">${fmtBRL(c.valor)}</td>
+          <td style="font-size:12px;color:var(--text2)">${fmtData(c.vencimento)}</td>
+        </tr>`).join('')}</tbody>
+      </table>`
+    : '<div class="empty-state"><div class="empty-title" style="padding:2rem">Nenhum pagamento registrado neste mês</div></div>';
+}
+
+function exportarFechamentoWpp() {
+  const mesSel = document.getElementById('f-mes-sel');
+  const empSel = document.getElementById('f-emp-sel').value;
+  const mesLabel = mesSel.options[mesSel.selectedIndex]?.text || '';
+  const mesSplit = mesSel.value.split('-').map(Number);
+  const [ano, mes] = mesSplit;
+
+  let pagos = DADOS.contas.filter(c => {
+    if (c.status !== 'Pago' || !c.vencimento) return false;
+    const d = new Date(c.vencimento + 'T00:00:00');
+    return d.getFullYear() === ano && d.getMonth() + 1 === mes;
+  });
+  if (empSel !== 'todas') pagos = pagos.filter(c => c.empresa === empSel);
+
+  const total = pagos.reduce((s,c) => s + c.valor, 0);
+  const porCat = {};
+  pagos.forEach(c => {
+    const cat = c.categoria || 'Outros';
+    if (!porCat[cat]) porCat[cat] = 0;
+    porCat[cat] += c.valor;
+  });
+
+  let msg = `📊 *Fechamento ${mesLabel}*\n`;
+  if (empSel !== 'todas') msg += `🏢 ${empSel}\n`;
+  msg += '\n';
+  Object.entries(porCat).sort((a,b) => b[1]-a[1]).forEach(([cat, val]) => {
+    msg += `• ${cat}: ${fmtBRL(val)}\n`;
+  });
+  msg += `\n💰 *Total: ${fmtBRL(total)}*\n`;
+  msg += `📋 ${pagos.length} lançamentos`;
+
+  abrirWhatsappMsg(msg);
 }
 
 // ─── UTILS ────────────────────────────────────────────────
