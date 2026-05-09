@@ -1,6 +1,5 @@
-
 <!DOCTYPE html>
-<html lang="pt-BR"> 
+<html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -1206,6 +1205,13 @@ body {
                     <option>Imposto/Guia</option>
                     <option>Folha de Pagamento</option>
                     <option>Frete/Logística</option>
+                    <option>Água/Luz/Internet</option>
+                    <option>Embalagem</option>
+                    <option>Seguro</option>
+                    <option>ADS</option>
+                    <option>Honorários</option>
+                    <option>Comissões</option>
+                    <option>Gasto Extra</option>
                     <option>Outros</option>
                   </select>
                 </div>
@@ -1566,11 +1572,15 @@ function renderTabela(pendentes, hoje, semana) {
       : '<span class="badge badge-gray">Futuro</span>';
 
     const tipoBadge = c.tipo ? `<span class="badge badge-blue">${c.tipo}</span>` : '';
+    const linha = c.cedente && c.cedente.length > 10 ? c.cedente : '';
+    const linhaId = 'linha_' + Math.random().toString(36).substr(2,6);
+    const linhaHtml = linha ? `<div style="display:flex;align-items:center;gap:6px;margin-top:4px"><span id="${linhaId}" style="font-size:10px;color:var(--text3);font-family:var(--mono);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:220px" title="${linha}">${linha}</span><button onclick="copiarLinha('${linhaId}','${linha.replace(/\\/g,'').replace(/'/g,'').replace(/"/g,'')}',this)" style="flex-shrink:0;padding:1px 6px;background:var(--bg3);border:0.5px solid var(--border);border-radius:4px;font-size:10px;color:var(--text2);cursor:pointer;font-family:var(--font)">copiar</button></div>` : '';
 
     return `<tr>
       <td>
         <div style="font-weight:500;font-size:13px">${c.descricao || '—'}</div>
         <div class="td-empresa">${c.empresa}</div>
+        ${linhaHtml}
       </td>
       <td>${c.categoria || '—'}</td>
       <td>${statusBadge}</td>
@@ -1601,6 +1611,14 @@ function renderTabela(pendentes, hoje, semana) {
       </thead>
       <tbody>${rows}</tbody>
     </table>`;
+}
+
+function copiarLinha(id, texto, btn) {
+  navigator.clipboard.writeText(texto).then(() => {
+    btn.textContent = '✓ copiado';
+    btn.style.color = 'var(--green)';
+    setTimeout(() => { btn.textContent = 'copiar'; btn.style.color = 'var(--text2)'; }, 2000);
+  });
 }
 
 async function marcarPago(pageId, btn) {
