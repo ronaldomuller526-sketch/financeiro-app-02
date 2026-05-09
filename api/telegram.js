@@ -4,7 +4,7 @@ const NOTION_TOKEN = process.env.NOTION_TOKEN;
 const DB_CONTAS = 'c7e0311365f84b81b4f1129e357dd8f7';
 
 const EMPRESAS = ['Mundo das Compras', 'Leão Home', 'Apollo Home', 'Casa 777', 'Achados do Lar'];
-const CATEGORIAS = ['Aluguel', 'Fornecedor', 'Assinatura', 'Imposto/Guia', 'Folha de Pagamento', 'Frete/Logística', 'Água/Luz/Internet', 'Embalagem', 'Gasto Extra', 'Outros'];
+const CATEGORIAS = ['Aluguel', 'Fornecedor', 'Assinatura', 'Imposto/Guia', 'Folha de Pagamento', 'Frete/Logística', 'Água/Luz/Internet', 'Embalagem', 'Seguro', 'ADS', 'Honorários', 'Comissões', 'Gasto Extra', 'Outros'];
 
 // Estado temporário por usuário
 const estado = {};
