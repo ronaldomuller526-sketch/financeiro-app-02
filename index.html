@@ -1287,13 +1287,19 @@ body {
       <!-- COMPARAR -->
       <div class="page" id="page-comparar">
         <div class="page-header">
-          <h1>Comparar</h1>
-          <p>Total a pagar por empresa no mês atual</p>
+          <div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:1rem">
+            <div>
+              <h1>Comparar</h1>
+              <p id="comparar-subtitle">Total a pagar por empresa no mês selecionado</p>
+            </div>
+            <select id="comparar-mes-sel" onchange="renderComparar()" style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:7px 12px;color:var(--text);font-family:var(--font);font-size:13px;outline:none"></select>
+          </div>
         </div>
         <div class="comparar-grid">
           <div class="card">
             <div class="card-header">
               <span class="card-title">Por empresa</span>
+              <span id="comparar-total" style="font-size:12px;color:var(--accent);font-weight:500"></span>
             </div>
             <div class="card-body" style="padding:1.25rem" id="comparar-empresas">
               <div class="empty-state"><div class="empty-text">Carregando...</div></div>
@@ -1875,14 +1881,55 @@ function fecharModalBoletos() {
 
 // ─── COMPARAR ────────────────────────────────────────────
 function renderComparar() {
-  const mes = new Date().getMonth();
-  const ano = new Date().getFullYear();
+  // Popular select de meses se ainda não foi
+  const sel = document.getElementById('comparar-mes-sel');
+  if (sel && sel.options.length === 0) {
+    const meses = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+    const hoje = new Date();
+    // Detectar meses disponíveis nos dados
+    const mesesDisp = new Set();
+    DADOS.contas.forEach(c => {
+      if (c.vencimento) {
+        const d = new Date(c.vencimento + 'T00:00:00');
+        mesesDisp.add(`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`);
+      }
+    });
+    const sorted = Array.from(mesesDisp).sort();
+    sorted.forEach(m => {
+      const [ano, mes] = m.split('-');
+      const opt = document.createElement('option');
+      opt.value = m;
+      opt.textContent = `${meses[parseInt(mes)-1]} ${ano}`;
+      if (parseInt(ano) === hoje.getFullYear() && parseInt(mes) === hoje.getMonth()+1) opt.selected = true;
+      sel.appendChild(opt);
+    });
+  }
+
+  const mesSel = sel ? sel.value : null;
+  let mes, ano;
+  if (mesSel) {
+    [ano, mes] = mesSel.split('-').map(Number);
+  } else {
+    const hoje = new Date();
+    mes = hoje.getMonth() + 1;
+    ano = hoje.getFullYear();
+  }
+
+  const meses = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+  if (document.getElementById('comparar-subtitle')) {
+    document.getElementById('comparar-subtitle').textContent = `Vencimentos de ${meses[mes-1]} ${ano}`;
+  }
 
   const contasMes = DADOS.contas.filter(c => {
     if (!c.vencimento) return false;
     const d = new Date(c.vencimento + 'T00:00:00');
-    return d.getMonth() === mes && d.getFullYear() === ano;
+    return d.getMonth() + 1 === mes && d.getFullYear() === ano;
   });
+
+  const totalGeral = contasMes.reduce((s,c) => s + c.valor, 0);
+  if (document.getElementById('comparar-total')) {
+    document.getElementById('comparar-total').textContent = `Total: ${fmtBRL(totalGeral)}`;
+  }
 
   // Por empresa
   const porEmpresa = {};
@@ -1892,19 +1939,21 @@ function renderComparar() {
     porEmpresa[c.empresa] += c.valor;
   });
 
-  const empresasSorted = Object.entries(porEmpresa).sort((a,b) => b[1] - a[1]);
+  const empresasSorted = Object.entries(porEmpresa).sort((a,b) => b[1] - a[1]).filter(([,v]) => v > 0);
   const maxEmp = Math.max(...empresasSorted.map(e => e[1]), 1);
 
-  document.getElementById('comparar-empresas').innerHTML = empresasSorted.map(([nome, val]) => `
-    <div class="bar-item">
-      <div class="bar-top">
-        <span class="bar-name">${nome}</span>
-        <span class="bar-val">${fmtBRL(val)}</span>
-      </div>
-      <div class="bar-track">
-        <div class="bar-fill" style="width:${Math.round(val/maxEmp*100)}%"></div>
-      </div>
-    </div>`).join('') || '<div class="empty-text">Sem dados este mês</div>';
+  document.getElementById('comparar-empresas').innerHTML = empresasSorted.length
+    ? empresasSorted.map(([nome, val]) => `
+      <div class="bar-item">
+        <div class="bar-top">
+          <span class="bar-name">${nome}</span>
+          <span class="bar-val">${fmtBRL(val)}</span>
+        </div>
+        <div class="bar-track">
+          <div class="bar-fill" style="width:${Math.round(val/maxEmp*100)}%"></div>
+        </div>
+      </div>`).join('')
+    : '<div class="empty-text" style="padding:1rem;color:var(--text3)">Sem dados neste mês</div>';
 
   // Por categoria
   const porCat = {};
@@ -1917,16 +1966,18 @@ function renderComparar() {
   const catSorted = Object.entries(porCat).sort((a,b) => b[1] - a[1]);
   const maxCat = Math.max(...catSorted.map(c => c[1]), 1);
 
-  document.getElementById('comparar-categorias').innerHTML = catSorted.map(([cat, val]) => `
-    <div class="bar-item">
-      <div class="bar-top">
-        <span class="bar-name">${cat}</span>
-        <span class="bar-val">${fmtBRL(val)}</span>
-      </div>
-      <div class="bar-track">
-        <div class="bar-fill" style="width:${Math.round(val/maxCat*100)}%"></div>
-      </div>
-    </div>`).join('') || '<div class="empty-text">Sem dados</div>';
+  document.getElementById('comparar-categorias').innerHTML = catSorted.length
+    ? catSorted.map(([cat, val]) => `
+      <div class="bar-item">
+        <div class="bar-top">
+          <span class="bar-name">${cat}</span>
+          <span class="bar-val">${fmtBRL(val)}</span>
+        </div>
+        <div class="bar-track">
+          <div class="bar-fill" style="width:${Math.round(val/maxCat*100)}%"></div>
+        </div>
+      </div>`).join('')
+    : '<div class="empty-text" style="padding:1rem;color:var(--text3)">Sem dados</div>';
 }
 
 // ─── ALERTAS ─────────────────────────────────────────────
