@@ -1505,19 +1505,28 @@ function navTo(page, btn) {
 
 // ─── NOTION API ───────────────────────────────────────────
 async function notionQuery(dbId, filter = null) {
-  const body = { page_size: 100 };
-  if (filter) body.filter = filter;
+  let results = [];
+  let cursor = undefined;
 
   try {
-    const r = await fetch(`/api/notion?path=databases/${dbId}/query`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body)
-    });
+    do {
+      const body = { page_size: 100 };
+      if (filter) body.filter = filter;
+      if (cursor) body.start_cursor = cursor;
 
-    if (!r.ok) throw new Error('Notion error ' + r.status);
-    const data = await r.json();
-    return data.results || [];
+      const r = await fetch(`/api/notion?path=databases/${dbId}/query`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      });
+
+      if (!r.ok) throw new Error('Notion error ' + r.status);
+      const data = await r.json();
+      results = results.concat(data.results || []);
+      cursor = data.has_more ? data.next_cursor : undefined;
+    } while (cursor);
+
+    return results;
   } catch (e) {
     console.error('Notion query error:', e);
     setNotionStatus(false);
