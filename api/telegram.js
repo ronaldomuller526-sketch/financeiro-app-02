@@ -7,7 +7,7 @@ const CATEGORIAS = ['Aluguel', 'Fornecedor', 'Assinatura', 'Imposto/Guia', 'Folh
 
 const estado = {};
 
-async function sendMessage(chatId, text, keyboard = null) {
+async function sendMessage(chatId, text, keyboard) {
   const body = { chat_id: chatId, text, parse_mode: 'Markdown' };
   if (keyboard) body.reply_markup = { inline_keyboard: keyboard };
   await fetch(`https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMessage`, {
@@ -17,30 +17,29 @@ async function sendMessage(chatId, text, keyboard = null) {
   });
 }
 
-async function answerCallback(callbackQueryId) {
+async function answerCallback(id) {
   await fetch(`https://api.telegram.org/bot${TELEGRAM_TOKEN}/answerCallbackQuery`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ callback_query_id: callbackQueryId })
+    body: JSON.stringify({ callback_query_id: id })
   });
 }
 
 function parsearTexto(texto) {
-  // Extrair valor — R$ 1.200,50 ou 1200.50 ou 1.200
   const valorMatch = texto.match(/R?\$?\s*([\d.,]+)/);
   let valor = null;
   if (valorMatch) {
     valor = valorMatch[1].replace(/\./g, '').replace(',', '.');
   }
 
-  // Extrair data — DD/MM, DD/MM/YYYY, DD-MM, hoje, ontem
-  let data = new Date().toISOString().split('T')[0];
   const hoje = new Date();
+  let data = hoje.toISOString().split('T')[0];
 
   if (/hoje/i.test(texto)) {
     data = hoje.toISOString().split('T')[0];
   } else if (/ontem/i.test(texto)) {
-    const d = new Date(hoje); d.setDate(d.getDate() - 1);
+    const d = new Date(hoje);
+    d.setDate(d.getDate() - 1);
     data = d.toISOString().split('T')[0];
   } else {
     const dataMatch = texto.match(/(\d{1,2})[\/\-](\d{1,2})(?:[\/\-](\d{2,4}))?/);
@@ -52,7 +51,6 @@ function parsearTexto(texto) {
     }
   }
 
-  // Extrair descrição — tudo que não é número/data/R$
   let descricao = texto
     .replace(/R?\$?\s*[\d.,]+/g, '')
     .replace(/(\d{1,2})[\/\-](\d{1,2})(?:[\/\-](\d{2,4}))?/g, '')
@@ -66,36 +64,36 @@ function parsearTexto(texto) {
 }
 
 function teclasEmpresas() {
-  return EMPRESAS.map(e => [{ text: e, callback_data: `empresa:${e}` }]);
+  return EMPRESAS.map(e => [{ text: e, callback_data: 'empresa:' + e }]);
 }
 
 function teclasCategorias() {
   const rows = [];
   for (let i = 0; i < CATEGORIAS.length; i += 2) {
-    const row = [{ text: CATEGORIAS[i], callback_data: `cat:${CATEGORIAS[i]}` }];
-    if (CATEGORIAS[i + 1]) row.push({ text: CATEGORIAS[i + 1], callback_data: `cat:${CATEGORIAS[i + 1]}` });
+    const row = [{ text: CATEGORIAS[i], callback_data: 'cat:' + CATEGORIAS[i] }];
+    if (CATEGORIAS[i + 1]) row.push({ text: CATEGORIAS[i + 1], callback_data: 'cat:' + CATEGORIAS[i + 1] });
     rows.push(row);
   }
   return rows;
 }
 
-async function salvarNoNotion(dados) {
-  const valor = parseFloat(dados.valor);
+async function salvarNoNotion(d) {
+  const valor = parseFloat(d.valor);
   const properties = {
-    'Descrição': { title: [{ text: { content: dados.descricao || 'Pagamento' } }] },
-    'Empresa': { rich_text: [{ text: { content: dados.empresa } }] },
+    'Descrição': { title: [{ text: { content: d.descricao || 'Pagamento' } }] },
+    'Empresa': { rich_text: [{ text: { content: d.empresa } }] },
     'Valor': { number: isNaN(valor) ? 0 : valor },
-    'Vencimento': { date: { start: dados.data || new Date().toISOString().split('T')[0] } },
+    'Vencimento': { date: { start: d.data || new Date().toISOString().split('T')[0] } },
     'Status': { select: { name: 'Pago' } },
     'Tipo': { select: { name: 'PIX' } },
-    'Categoria': { select: { name: dados.categoria } },
-    'Observações': { rich_text: [{ text: { content: '✅ Registrado via Telegram' } }] }
+    'Categoria': { select: { name: d.categoria } },
+    'Observações': { rich_text: [{ text: { content: 'Registrado via Telegram' } }] }
   };
 
   const r = await fetch('https://api.notion.com/v1/pages', {
     method: 'POST',
     headers: {
-      'Authorization': `Bearer ${NOTION_TOKEN}`,
+      'Authorization': 'Bearer ' + NOTION_TOKEN,
       'Notion-Version': '2022-06-28',
       'Content-Type': 'application/json'
     },
@@ -110,36 +108,35 @@ module.exports = async function handler(req, res) {
 
   const update = req.body;
 
-  // CALLBACK de botão
   if (update.callback_query) {
     const cb = update.callback_query;
     const chatId = cb.message.chat.id;
-    const data = cb.data;
     await answerCallback(cb.id);
 
     if (!estado[chatId]) estado[chatId] = {};
 
-    if (data.startsWith('empresa:')) {
-      estado[chatId].empresa = data.replace('empresa:', '');
-      await sendMessage(chatId, `🏢 *${estado[chatId].empresa}*\n\nAgora selecione a categoria:`, teclasCategorias());
+    if (cb.data.startsWith('empresa:')) {
+      estado[chatId].empresa = cb.data.replace('empresa:', '');
+      await sendMessage(chatId, '🏢 *' + estado[chatId].empresa + '*\n\nSelecione a categoria:', teclasCategorias());
     }
 
-    if (data.startsWith('cat:')) {
-      estado[chatId].categoria = data.replace('cat:', '');
+    if (cb.data.startsWith('cat:')) {
+      estado[chatId].categoria = cb.data.replace('cat:', '');
       const d = estado[chatId];
-
       const ok = await salvarNoNotion(d);
 
       if (ok) {
-        const valorFmt = d.valor ? `R$ ${parseFloat(String(d.valor).replace(/[R$\s.]/g, '').replace(',', '.')).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : '—';
+        const vf = d.valor ? 'R$ ' + parseFloat(d.valor).toLocaleString('pt-BR', { minimumFractionDigits: 2 }) : '—';
+        const parts = (d.data || '').split('-');
+        const df = parts.length === 3 ? parts[2] + '/' + parts[1] + '/' + parts[0] : d.data;
         await sendMessage(chatId,
-          `✅ *Pagamento registrado!*\n\n` +
-          `📄 ${d.beneficiario}\n` +
-          `💰 ${valorFmt}\n` +
-          `📅 ${d.data}\n` +
-          `🏢 ${d.empresa}\n` +
-          `🏷️ ${d.categoria}\n\n` +
-          `_Lançado como PAGO no Notion_`
+          '✅ *Pagamento registrado!*\n\n' +
+          '📄 ' + d.descricao + '\n' +
+          '💰 ' + vf + '\n' +
+          '📅 ' + df + '\n' +
+          '🏢 ' + d.empresa + '\n' +
+          '🏷️ ' + d.categoria + '\n\n' +
+          '_Lançado como PAGO no Notion_'
         );
       } else {
         await sendMessage(chatId, '❌ Erro ao salvar no Notion. Tente novamente.');
@@ -151,83 +148,42 @@ module.exports = async function handler(req, res) {
     return res.status(200).end();
   }
 
-  // MENSAGEM
   const msg = update.message;
-  if (!msg) return res.status(200).end();
+  if (!msg || !msg.text) return res.status(200).end();
 
   const chatId = msg.chat.id;
+  const texto = msg.text.trim();
+
   if (!estado[chatId]) estado[chatId] = {};
 
-  try {
-    // FOTO
-    if (msg.photo) {
-      await sendMessage(chatId, '🤖 Lendo o comprovante...');
-      const fileId = msg.photo[msg.photo.length - 1].file_id;
-      const { buffer } = await getFile(fileId);
-      const extraido = await extrairComIA(buffer, 'image/jpeg', false);
-      Object.assign(estado[chatId], extraido);
-      await sendMessage(chatId,
-        `📋 *Dados extraídos:*\n\n` +
-        `📄 Beneficiário: *${extraido.beneficiario || '?'}*\n` +
-        `💰 Valor: *${extraido.valor || '?'}*\n` +
-        `📅 Data: *${extraido.data || '?'}*\n\n` +
-        `Selecione a empresa:`,
-        teclasEmpresas()
-      );
-      return res.status(200).end();
-    }
-
-    // DOCUMENTO PDF
-    if (msg.document) {
-      await sendMessage(chatId, '🤖 Lendo o PDF...');
-      const { buffer } = await getFile(msg.document.file_id);
-      const extraido = await extrairComIA(buffer, 'application/pdf', true);
-      Object.assign(estado[chatId], extraido);
-      await sendMessage(chatId,
-        `📋 *Dados extraídos:*\n\n` +
-        `📄 Beneficiário: *${extraido.beneficiario || '?'}*\n` +
-        `💰 Valor: *${extraido.valor || '?'}*\n` +
-        `📅 Data: *${extraido.data || '?'}*\n\n` +
-        `Selecione a empresa:`,
-        teclasEmpresas()
-      );
-      return res.status(200).end();
-    }
-
-    // TEXTO
-    if (msg.text) {
-      const texto = msg.text.trim();
-
-      if (texto === '/start') {
-        await sendMessage(chatId,
-          `👋 *Bot Financeiro MC*\n\n` +
-          `Manda um comprovante ou descreva o pagamento e eu registro automaticamente no sistema.\n\n` +
-          `*Exemplos:*\n` +
-          `• Foto/print do comprovante PIX\n` +
-          `• PDF do comprovante\n` +
-          `• _"Paguei R$ 1.200 de aluguel para João Silva hoje"_`
-        );
-        return res.status(200).end();
-      }
-
-      await sendMessage(chatId, '🤖 Extraindo dados do texto...');
-      const extraido = await extrairDeTexto(texto);
-      Object.assign(estado[chatId], extraido);
-      await sendMessage(chatId,
-        `📋 *Dados extraídos:*\n\n` +
-        `📄 Beneficiário: *${extraido.beneficiario || '?'}*\n` +
-        `💰 Valor: *${extraido.valor || '?'}*\n` +
-        `📅 Data: *${extraido.data || '?'}*\n\n` +
-        `Selecione a empresa:`,
-        teclasEmpresas()
-      );
-      return res.status(200).end();
-    }
-
-  } catch (e) {
-    await sendMessage(chatId, '❌ Erro ao processar. Tente novamente.');
-    console.error(e);
+  if (texto === '/start' || texto === '/ajuda') {
+    await sendMessage(chatId,
+      '👋 *Bot Financeiro MC*\n\n' +
+      'Descreva o pagamento e eu registro no sistema.\n\n' +
+      '*Exemplos:*\n' +
+      '• `R$ 1.200 aluguel galpão 08/05`\n' +
+      '• `500 embalagem ontem`\n' +
+      '• `R$ 3.800 fornecedor Martins hoje`\n' +
+      '• `400 honorários contador 01/05`'
+    );
+    return res.status(200).end();
   }
 
+  const extraido = parsearTexto(texto);
+  Object.assign(estado[chatId], extraido);
+
+  const vf = extraido.valor ? 'R$ ' + parseFloat(extraido.valor).toLocaleString('pt-BR', { minimumFractionDigits: 2 }) : '?';
+  const parts = (extraido.data || '').split('-');
+  const df = parts.length === 3 ? parts[2] + '/' + parts[1] + '/' + parts[0] : '?';
+
+  await sendMessage(chatId,
+    '📋 *Dados identificados:*\n\n' +
+    '📄 ' + extraido.descricao + '\n' +
+    '💰 ' + vf + '\n' +
+    '📅 ' + df + '\n\n' +
+    'Selecione a empresa:',
+    teclasEmpresas()
+  );
+
   return res.status(200).end();
-}
+};
