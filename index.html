@@ -1348,6 +1348,21 @@
     </div>
 
     <!-- APP -->
+    <!-- LOGIN -->
+    <div id="login-screen" style="min-height:100vh;display:flex;align-items:center;justify-content:center;background:var(--bg);padding:2rem">
+        <div style="background:var(--bg2);border:1px solid var(--border);border-radius:20px;padding:2.5rem;max-width:380px;width:100%;box-shadow:var(--shadow)">
+            <div style="margin-bottom:2rem;text-align:center">
+                <div style="font-size:22px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:var(--accent);line-height:1">Grupo MC</div>
+                <div style="font-size:12px;color:var(--text3);margin-top:4px">Financeiro</div>
+            </div>
+            <div style="margin-bottom:12px">
+                <label style="display:block;font-size:12px;color:var(--text2);margin-bottom:6px;font-weight:500">Senha de acesso</label>
+                <input type="password" id="login-senha" placeholder="Digite sua senha" onkeydown="if(event.key==='Enter')fazerLogin()" style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px 14px;color:var(--text);font-family:var(--font);font-size:14px;outline:none;box-sizing:border-box">
+            </div>
+            <div id="login-erro" style="display:none;font-size:12px;color:var(--red);margin-bottom:10px;text-align:center">Senha incorreta. Tente novamente.</div>
+            <button onclick="fazerLogin()" style="width:100%;padding:11px;background:var(--accent);color:white;border:none;border-radius:8px;font-family:var(--font);font-size:14px;font-weight:600;cursor:pointer;margin-top:4px">Entrar</button>
+        </div>
+    </div>
     <div id="app">
         <div class="layout">
             <!-- SIDEBAR -->
@@ -1931,9 +1946,7 @@
     function resetConfig() {}
 
     // ─── INIT ──────────────────────────────────────────────────
-    window.addEventListener('DOMContentLoaded', () => {
-        iniciarApp();
-    });
+    // inicialização controlada pelo login
 
     function iniciarApp() {
         document.getElementById('app').style.display = 'block';
@@ -3266,6 +3279,41 @@
     document.getElementById('modal-empresa').addEventListener('click', function(e) {
         if (e.target === this)
             fecharModal();
+    });
+    </script>
+
+    <script>
+    // ─── LOGIN ────────────────────────────────────────────────
+    const SENHA_HASH = '5a8c3f2e1b9d4f7a2c6e8b1d3f5a7c9e'; // hash placeholder
+
+    function fazerLogin() {
+        const senha = document.getElementById('login-senha').value;
+        const erro = document.getElementById('login-erro');
+
+        if (senha === '1Mem1Ano@') {
+            sessionStorage.setItem('gmc-auth', 'ok');
+            document.getElementById('login-screen').style.display = 'none';
+            document.getElementById('app').style.display = 'block';
+            iniciarApp();
+            erro.style.display = 'none';
+        } else {
+            erro.style.display = 'block';
+            document.getElementById('login-senha').value = '';
+            document.getElementById('login-senha').focus();
+        }
+    }
+
+    // Verificar se já está autenticado
+    window.addEventListener('DOMContentLoaded', () => {
+        if (sessionStorage.getItem('gmc-auth') === 'ok') {
+            document.getElementById('login-screen').style.display = 'none';
+            document.getElementById('app').style.display = 'block';
+            iniciarApp();
+        } else {
+            document.getElementById('login-screen').style.display = 'flex';
+            document.getElementById('app').style.display = 'none';
+            setTimeout(() => document.getElementById('login-senha').focus(), 100);
+        }
     });
     </script>
 </body>
