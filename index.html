@@ -2830,17 +2830,6 @@
     }
 
     async function extrairDadosIA(base64, mediaType, isPdf) {
-        if (!CONFIG.anthropicKey) {
-            // Sem chave: retornar mock para demonstração
-            await new Promise(r => setTimeout(r, 1500));
-            return {
-                cedente: 'Fornecedor Exemplo Ltda',
-                valor: '4580.00',
-                vencimento: new Date(Date.now() + 9 * 864e5).toISOString().split('T')[0],
-                linha: '34191.09008 01234.567890'
-            };
-        }
-
         const content = isPdf
         ? [{
             type: 'document',
@@ -2873,7 +2862,7 @@
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({
-                model: 'claude-opus-4-5',
+                model: 'claude-sonnet-4-20250514',
                 max_tokens: 500,
                 messages: [{
                     role: 'user',
@@ -2882,7 +2871,12 @@
             })
         });
 
+        if (!r.ok)
+            throw new Error('Erro API: ' + r.status);
+
         const data = await r.json();
+        if (data.error)
+            throw new Error(data.error);
         const text = data.content?.[0]?.text || '{}';
         const clean = text.replace(/```json|```/g, '').trim();
         return JSON.parse(clean);
