@@ -3312,7 +3312,7 @@
         document.getElementById('fech-tabela').innerHTML = sorted.length
         ? `<table class="data-table">
         <thead><tr>
-          <th>Descrição</th><th>Empresa</th><th>Categoria</th><th>Tipo</th><th>Valor</th><th>Data</th>
+          <th>Descrição</th><th>Empresa</th><th>Categoria</th><th>Tipo</th><th>Valor</th><th>Vencimento</th><th>Pago em</th><th></th>
         </tr></thead>
         <tbody>${
 
@@ -3322,12 +3322,53 @@
           <td style="font-size:12px;color:var(--text2)">${c.empresa}</td>
           <td>${c.categoria ? `<span class="badge badge-gray">${c.categoria}</span>` : '—'}</td>
           <td>${c.tipo ? `<span class="badge badge-blue">${c.tipo}</span>` : '—'}</td>
-          <td style="font-weight:600">${fmtBRL(c.valor)}</td>
-          <td style="font-size:12px;color:var(--text2)">${fmtData(c.vencimento)}</td>
-        </tr>`).join('')}</tbody>
+          <td style="font-weight:600">
+            ${
+        fmtBRL(c.valor)}
+            ${c.jurosMulta > 0 ? `<div style="font-size:10px;color:var(--red)">inclui ${fmtBRL(c.jurosMulta)} juros</div>` : ''}
+          </td>
+          <td style="font-size:12px;color:var(--text2)">${
+        fmtData(c.vencimento)}</td>
+          <td style="font-size:12px;color:var(--green);font-weight:500">${c.dataPagamento ? fmtData(c.dataPagamento) : '—'}</td>
+          <td>
+            <button class="btn-pago" onclick="desfazerPagoFechamento('${
+        c.id}', this)" style="color:var(--red);border-color:var(--red)">
+              ↩ Desfazer
+            </button>
+          </td>
+        </tr>`
+
+
+        ).join('')}</tbody>
       </table>`
 
         : '<div class="empty-state"><div class="empty-title" style="padding:2rem">Nenhum pagamento registrado neste mês</div></div>';
+    }
+
+    async function desfazerPagoFechamento(pageId, btn) {
+        if (!confirm('Desfazer pagamento? O status voltará para Pendente.'))
+            return;
+        btn.disabled = true;
+        btn.textContent = '...';
+        try {
+            await notionUpdate(pageId, {
+                'Status': {
+                    select: {
+                        name: 'Pendente'
+                    }
+                },
+                'Data de Pagamento': {
+                    date: null
+                }
+            });
+            await carregarDados();
+            renderFechamento();
+            showToast('Pagamento desfeito!', 'Status voltou para Pendente', 'success');
+        } catch (e) {
+            showToast('Erro ao desfazer', e.message, 'error');
+            btn.disabled = false;
+            btn.textContent = '↩ Desfazer';
+        }
     }
 
     function exportarFechamentoWpp() {
