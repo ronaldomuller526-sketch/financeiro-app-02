@@ -1452,12 +1452,15 @@
                 <!-- DASHBOARD -->
                 <div class="page active" id="page-dashboard">
                     <div class="page-header">
-                        <div style="display:flex;align-items:flex-start;justify-content:space-between">
+                        <div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:1rem">
                             <div>
                                 <h1>Dashboard</h1>
                                 <p id="dash-subtitle">Carregando dados...</p>
                             </div>
-                            <div style="display:flex;gap:8px;align-items:center">
+                            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+                                <select id="dash-empresa-sel" onchange="renderDashboard()" style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:7px 12px;color:var(--text);font-family:var(--font);font-size:13px;outline:none">
+                                    <option value="todas">Todas as empresas</option>
+                                </select>
                                 <a href="https://www.notion.so/c7e0311365f84b81b4f1129e357dd8f7" target="_blank" class="notion-link">
                                     <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
                                         <path d="M4 4h7V2H4a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h7v-2H4V4z"/>
@@ -2102,6 +2105,15 @@
         DADOS.empresas.forEach(e => {
             sel.innerHTML += `<option value="${e.nome}">${e.nome}</option>`;
         });
+
+        // Popular select do dashboard
+        const dashSel = document.getElementById('dash-empresa-sel');
+        if (dashSel) {
+            dashSel.innerHTML = '<option value="todas">Todas as empresas</option>';
+            DADOS.empresas.forEach(e => {
+                dashSel.innerHTML += `<option value="${e.nome}">${e.nome}</option>`;
+            });
+        }
     }
 
     function filtrarTabela(filtro) {
@@ -2109,7 +2121,14 @@
         hoje.setHours(0, 0, 0, 0);
         const semana = new Date(hoje);
         semana.setDate(semana.getDate() + 7);
-        const pendentes = DADOS.contas.filter(c => c.status !== 'Pago' && c.status !== 'Cancelado');
+
+        const empSel = document.getElementById('dash-empresa-sel');
+        const empFiltro = empSel ? empSel.value : 'todas';
+
+        let pendentes = DADOS.contas.filter(c => c.status !== 'Pago' && c.status !== 'Cancelado');
+        if (empFiltro !== 'todas') {
+            pendentes = pendentes.filter(c => c.empresa === empFiltro);
+        }
 
         const labels = {
             'todos': 'Todos os pendentes',
@@ -2164,7 +2183,13 @@
         const semana = new Date(hoje);
         semana.setDate(semana.getDate() + 7);
 
-        const pendentes = DADOS.contas.filter(c => c.status !== 'Pago' && c.status !== 'Cancelado');
+        const empSel = document.getElementById('dash-empresa-sel');
+        const empFiltro = empSel ? empSel.value : 'todas';
+
+        let pendentes = DADOS.contas.filter(c => c.status !== 'Pago' && c.status !== 'Cancelado');
+        if (empFiltro !== 'todas') {
+            pendentes = pendentes.filter(c => c.empresa === empFiltro);
+        }
 
         let totalPendente = 0,
             totalHoje = 0,
@@ -2195,7 +2220,7 @@
         document.getElementById('m-semana').textContent = fmtBRL(totalSemana);
         document.getElementById('m-semana-count').textContent = `${countSemana} lançamento${countSemana !== 1 ? 's' : ''}`;
         document.getElementById('m-atrasados').textContent = atrasados;
-        document.getElementById('dash-subtitle').textContent = `Atualizado agora · ${pendentes.length} pendentes`;
+        document.getElementById('dash-subtitle').textContent = `Atualizado agora · ${pendentes.length} pendentes${empFiltro !== 'todas' ? ' · ' + empFiltro : ''}`;
 
         renderTabela(pendentes, hoje, semana);
     }
