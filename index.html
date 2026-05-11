@@ -2060,10 +2060,12 @@
             empresa: p['Empresa']?.rich_text?.[0]?.plain_text || '',
             valor: p['Valor']?.number || 0,
             vencimento: p['Vencimento']?.date?.start || '',
+            dataPagamento: p['Data de Pagamento']?.date?.start || '',
             categoria: p['Categoria']?.select?.name || '',
             status: p['Status']?.select?.name || 'Pendente',
             tipo: p['Tipo']?.select?.name || '',
             cedente: p['Cedente']?.rich_text?.[0]?.plain_text || '',
+            jurosMulta: p['Juros/Multa']?.number || 0,
         };
     }
 
@@ -2190,19 +2192,26 @@
             c.categoria || '—'}</td>
       <td>${statusBadge}</td>
       <td>${tipoBadge}</td>
-      <td style="font-weight:600;color:var(--text)">${fmtBRL(c.valor)}</td>
-      <td style="color:var(--text2);font-size:12px">${fmtData(c.vencimento)}</td>
-      <td>
+      <td style="font-weight:600;color:var(--text)">
+        ${
+            fmtBRL(c.valor)}
+        ${c.jurosMulta > 0 ? `<div style="font-size:10px;color:var(--red);font-weight:400">inclui ${fmtBRL(c.jurosMulta)} juros/multa</div>` : ''}
+      </td>
+      <td style="color:var(--text2);font-size:12px">${
+            fmtData(c.vencimento)}</td>
+      <td style="color:var(--green);font-size:12px">${c.dataPagamento ? fmtData(c.dataPagamento) : '—'}</td>
+      <td style="display:flex;gap:6px;align-items:center">
         <button class="btn-pago" onclick="marcarPago('${
             c.id}', this)">
           <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
           Pago
         </button>
+        ${
+
+
+            c.status === 'Pago' ? `<button class="btn-pago" onclick="desfazerPago('${c.id}', this)" style="color:var(--red);border-color:var(--red)">↩ Desfazer</button>` : ''}
       </td>
     </tr>`
-
-
-
 
             ;
         }).join('');
@@ -2217,10 +2226,12 @@
           <th>Tipo</th>
           <th>Valor</th>
           <th>Vencimento</th>
+          <th>Pago em</th>
           <th></th>
         </tr>
       </thead>
       <tbody>${
+
 
 
 
@@ -2249,22 +2260,85 @@
     }
 
     async function marcarPago(pageId, btn) {
+        const hoje = new Date().toISOString().split('T')[0];
+        const dataPagto = prompt('Data do pagamento (AAAA-MM-DD):', hoje);
+        if (dataPagto === null)
+            return;
+
+        const conta = DADOS.contas.find(c => c.id === pageId);
+        let jurosMulta = 0;
+
+        if (conta && conta.vencimento && dataPagto > conta.vencimento) {
+            const jurosStr = prompt(
+            `⚠️ Pagamento após vencimento!\n\nVencimento: ${fmtData(conta.vencimento)}\nPagamento: ${fmtData(dataPagto)}\nValor nominal: ${fmtBRL(conta.valor)}\n\nInforme o valor de juros/multa pago (ou 0 se não houve):`,
+            '0'
+            );
+            if (jurosStr === null)
+                return;
+            jurosMulta = parseFloat(jurosStr.replace(',', '.')) || 0;
+        }
+
+        btn.disabled = true;
+        btn.textContent = '...';
+
+        try {
+            const valorTotal = conta ? conta.valor + jurosMulta : null;
+            const props = {
+                'Status': {
+                    select: {
+                        name: 'Pago'
+                    }
+                },
+                'Data de Pagamento': {
+                    date: {
+                        start: dataPagto || hoje
+                    }
+                }
+            };
+            if (jurosMulta > 0) {
+                props['Juros/Multa'] = {
+                    number: jurosMulta
+                };
+                if (valorTotal)
+                    props['Valor'] = {
+                        number: valorTotal
+                    };
+            }
+            await notionUpdate(pageId, props);
+            await carregarDados();
+            const msg = jurosMulta > 0
+            ? `Total pago: ${fmtBRL(valorTotal)} (inclui ${fmtBRL(jurosMulta)} de juros)`
+            : 'Atualizado no Notion';
+            showToast('Marcado como pago!', msg, 'success');
+        } catch (e) {
+            showToast('Erro ao atualizar', e.message, 'error');
+            btn.disabled = false;
+            btn.textContent = 'Pago';
+        }
+    }
+
+    async function desfazerPago(pageId, btn) {
+        if (!confirm('Desfazer pagamento? O status voltará para Pendente.'))
+            return;
         btn.disabled = true;
         btn.textContent = '...';
         try {
             await notionUpdate(pageId, {
                 'Status': {
                     select: {
-                        name: 'Pago'
+                        name: 'Pendente'
                     }
+                },
+                'Data de Pagamento': {
+                    date: null
                 }
             });
             await carregarDados();
-            showToast('Marcado como pago!', 'Atualizado no Notion', 'success');
+            showToast('Pagamento desfeito!', 'Status voltou para Pendente', 'success');
         } catch (e) {
-            showToast('Erro ao atualizar', e.message, 'error');
+            showToast('Erro ao desfazer', e.message, 'error');
             btn.disabled = false;
-            btn.textContent = 'Pago';
+            btn.textContent = 'Desfazer';
         }
     }
 
@@ -2419,6 +2493,11 @@
     }
 
     async function marcarPagoModal(pageId, btn) {
+        const hoje = new Date().toISOString().split('T')[0];
+        const dataPagto = prompt('Data do pagamento (AAAA-MM-DD):', hoje);
+        if (dataPagto === null)
+            return;
+
         btn.disabled = true;
         btn.textContent = '...';
         try {
@@ -2426,6 +2505,11 @@
                 'Status': {
                     select: {
                         name: 'Pago'
+                    }
+                },
+                'Data de Pagamento': {
+                    date: {
+                        start: dataPagto || hoje
                     }
                 }
             });
