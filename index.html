@@ -1482,22 +1482,22 @@
                     </div>
 
                     <div class="metrics-grid" id="metrics-grid">
-                        <div class="metric-card info">
+                        <div class="metric-card info" onclick="filtrarTabela('todos')" style="cursor:pointer" title="Ver todos os pendentes">
                             <div class="metric-label">Total a vencer</div>
                             <div class="metric-value" id="m-total">—</div>
                             <div class="metric-sub">todas as empresas</div>
                         </div>
-                        <div class="metric-card danger">
+                        <div class="metric-card danger" onclick="filtrarTabela('hoje')" style="cursor:pointer" title="Ver vencimentos de hoje">
                             <div class="metric-label">Vence hoje</div>
                             <div class="metric-value danger" id="m-hoje">—</div>
                             <div class="metric-sub" id="m-hoje-count">—</div>
                         </div>
-                        <div class="metric-card warning">
+                        <div class="metric-card warning" onclick="filtrarTabela('semana')" style="cursor:pointer" title="Ver vencimentos desta semana">
                             <div class="metric-label">Esta semana</div>
                             <div class="metric-value warning" id="m-semana">—</div>
                             <div class="metric-sub" id="m-semana-count">—</div>
                         </div>
-                        <div class="metric-card danger">
+                        <div class="metric-card danger" onclick="filtrarTabela('atrasados')" style="cursor:pointer" title="Ver atrasados">
                             <div class="metric-label">Atrasados</div>
                             <div class="metric-value danger" id="m-atrasados">—</div>
                             <div class="metric-sub">requer atenção</div>
@@ -1507,7 +1507,7 @@
                     <div class="card">
                         <div class="card-header">
                             <span class="card-title">Próximos vencimentos</span>
-                            <span style="font-size:11px;color:var(--text3)">Pendentes e atrasados</span>
+                            <span id="filtro-label" style="font-size:11px;color:var(--text3)">Pendentes e atrasados</span>
                         </div>
                         <div class="card-body">
                             <div id="table-container">
@@ -2102,6 +2102,59 @@
         DADOS.empresas.forEach(e => {
             sel.innerHTML += `<option value="${e.nome}">${e.nome}</option>`;
         });
+    }
+
+    function filtrarTabela(filtro) {
+        const hoje = new Date();
+        hoje.setHours(0, 0, 0, 0);
+        const semana = new Date(hoje);
+        semana.setDate(semana.getDate() + 7);
+        const pendentes = DADOS.contas.filter(c => c.status !== 'Pago' && c.status !== 'Cancelado');
+
+        const labels = {
+            'todos': 'Todos os pendentes',
+            'hoje': 'Vence hoje',
+            'semana': 'Esta semana',
+            'atrasados': 'Atrasados'
+        };
+
+        document.getElementById('filtro-label').textContent = labels[filtro];
+
+        // Destacar card ativo
+        document.querySelectorAll('.metric-card').forEach(c => c.style.boxShadow = '');
+        const idx = {
+            todos: 0,
+            hoje: 1,
+            semana: 2,
+            atrasados: 3
+        }[filtro];
+        document.querySelectorAll('.metric-card')[idx].style.boxShadow = '0 0 0 2px var(--accent)';
+
+        let filtrados;
+        switch (filtro) {
+        case 'hoje':
+            filtrados = pendentes.filter(c => {
+                const v = new Date(c.vencimento + 'T00:00:00');
+                return v.toDateString() === hoje.toDateString();
+            });
+            break;
+        case 'semana':
+            filtrados = pendentes.filter(c => {
+                const v = new Date(c.vencimento + 'T00:00:00');
+                return v >= hoje && v <= semana;
+            });
+            break;
+        case 'atrasados':
+            filtrados = pendentes.filter(c => {
+                const v = new Date(c.vencimento + 'T00:00:00');
+                return v < hoje;
+            });
+            break;
+        default:
+            filtrados = pendentes;
+        }
+
+        renderTabela(filtrados, hoje, semana);
     }
 
     // ─── DASHBOARD ────────────────────────────────────────────
